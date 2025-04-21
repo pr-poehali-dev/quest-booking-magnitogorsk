@@ -29,7 +29,7 @@
 
 /* Глобальные стили */
 body {
-  @apply bg-black text-orange-DEFAULT;
+  @apply bg-black text-orange-500;
   font-family: 'Roboto', sans-serif;
 }
 
@@ -242,4 +242,31 @@ body {
     -1px 1px 0 #000,
     1px 1px 0 #000,
     0 0 15px rgba(241, 196, 15, 0.8);
+}
+
+/* Новые стили для улучшения сайта */
+.neon-text {
+  color: #FF8C00;
+  text-shadow: 
+    0 0 5px #FF8C00,
+    0 0 10px #FF8C00,
+    0 0 20px #FF8C00,
+    0 0 40px #FF8C00;
+  font-weight: bold;
+}
+
+.neon-yellow {
+  color: #FFFF00;
+  text-shadow:
+    0 0 5px #FFFF00,
+    0 0 10px #FFFF00,
+    0 0 20px #FFFF00;
+  font-weight: bold;
+}
+
+.high-contrast-text {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  color: #FFA500;
 }
