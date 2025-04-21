@@ -53,17 +53,31 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				yellow: {
-					DEFAULT: '#f1c40f'
+					DEFAULT: '#f1c40f',
+                    bright: '#FFDD00',
+                    neon: '#FFFF00'
 				},
 				orange: {
-					DEFAULT: '#e67e22'
+					DEFAULT: '#e67e22',
+                    bright: '#FF8C00',
+                    neon: '#FFA500'
 				},
 				black: {
 					DEFAULT: '#000000'
 				},
 				brick: {
-					DEFAULT: '#8B0000'
-				}
+					DEFAULT: '#8B0000',
+                    dark: '#5B0000'
+				},
+                toxic: {
+                    DEFAULT: '#39FF14',
+                    dark: '#32CD32'
+                },
+                gold: {
+                    DEFAULT: '#FFD700',
+                    light: '#FFF8DC',
+                    dark: '#B8860B'
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -86,11 +100,31 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+                pulse: {
+                    '0%, 100%': { 
+                        opacity: '1',
+                        transform: 'scale(1)'
+                    },
+                    '50%': { 
+                        opacity: '0.85',
+                        transform: 'scale(1.05)'
+                    }
+                },
+                glow: {
+                    '0%, 100%': { 
+                        boxShadow: '0 0 15px rgba(241, 196, 15, 0.7)'
+                    },
+                    '50%': { 
+                        boxShadow: '0 0 30px rgba(241, 196, 15, 0.9)'
+                    }
+                }
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+                'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'glow': 'glow 2s infinite alternate'
 			}
 		}
 	},

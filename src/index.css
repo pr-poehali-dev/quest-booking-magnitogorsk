@@ -5,176 +5,241 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 39 100% 50%; /* желтый */
-    --primary-foreground: 0 0% 0%;
-
-    --secondary: 0 0% 0%; /* черный */
-    --secondary-foreground: 39 100% 50%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 25 100% 50%; /* оранжевый */
-    --accent-foreground: 0 0% 0%;
-
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 39 100% 50%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
     --radius: 0.5rem;
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 39 100% 50%; /* желтый */
-    --primary-foreground: 0 0% 0%;
-
-    --secondary: 0 0% 0%; /* черный */
-    --secondary-foreground: 39 100% 50%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 25 100% 50%; /* оранжевый */
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 39 100% 50%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Глобальные стили */
+body {
+  @apply bg-black text-orange-DEFAULT;
+  font-family: 'Roboto', sans-serif;
 }
 
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
+/* Стилизация черно-желтой ленты */
+.warning-tape {
+  @apply h-8 bg-black;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #f1c40f,
+    #f1c40f 20px,
+    #000 20px,
+    #000 40px
+  );
+  box-shadow: 0 0 20px rgba(241, 196, 15, 0.8);
+}
+
+/* Эффект кирпичной стены */
+.brick-wall-bg {
+  background-color: #8B0000;
+  background-image: 
+    linear-gradient(335deg, #000000 23px, transparent 23px),
+    linear-gradient(155deg, #000000 23px, transparent 23px),
+    linear-gradient(335deg, #000000 23px, transparent 23px),
+    linear-gradient(155deg, #000000 23px, transparent 23px);
+  background-size: 58px 58px;
+  background-position: 0px 2px, 4px 35px, 29px 31px, 34px 6px;
+}
+
+/* Анимация смены дня и ночи */
+.day-night-cycle {
+  position: relative;
+  overflow: hidden;
+}
+
+.day-night-cycle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, 
+    rgba(25, 25, 112, 0) 0%,
+    rgba(25, 25, 112, 0.3) 100%);
+  animation: dayNightCycle 20s infinite alternate;
+  z-index: 0;
 }
 
 @keyframes dayNightCycle {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(0.4); }
+  0% {
+    opacity: 0.2;
+    background: linear-gradient(to bottom, 
+      rgba(135, 206, 235, 0.2) 0%,
+      rgba(25, 25, 112, 0.3) 100%);
+  }
+  50% {
+    opacity: 0.5;
+    background: linear-gradient(to bottom, 
+      rgba(255, 165, 0, 0.3) 0%,
+      rgba(139, 0, 0, 0.4) 100%);
+  }
+  100% {
+    opacity: 0.7;
+    background: linear-gradient(to bottom, 
+      rgba(25, 25, 112, 0.4) 0%,
+      rgba(0, 0, 0, 0.6) 100%);
+  }
 }
 
-.day-night-cycle {
-  animation: dayNightCycle 60s infinite;
+/* Стилизация для контейнера с предупреждением */
+.caution-border {
+  border: 4px solid #f1c40f;
+  border-style: dashed;
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.7), 
+              inset 0 0 15px rgba(241, 196, 15, 0.7);
+  animation: pulseBorder 2s infinite alternate;
 }
 
-.brick-wall-bg {
-  background-image: url('/placeholder.svg');
-  background-color: #8B0000;
-  background-size: cover;
-  background-blend-mode: multiply;
-  position: relative;
+@keyframes pulseBorder {
+  from {
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.7), 
+                inset 0 0 15px rgba(241, 196, 15, 0.7);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.9), 
+                inset 0 0 25px rgba(241, 196, 15, 0.9);
+  }
 }
 
+/* Эффект токсичных отходов */
 .toxic-waste-bg::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 255, 0, 0.05);
-  pointer-events: none;
-  z-index: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, 
+    rgba(0, 255, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0) 70%);
+  animation: toxicPulse 4s infinite alternate;
+  z-index: 1;
 }
 
-.flashing-light {
-  animation: flicker 2s infinite;
+@keyframes toxicPulse {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0.7;
+  }
 }
 
-.treasure-bg::before {
-  content: '';
+/* Эффект зеленого дыма */
+.green-smoke {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 215, 0, 0.1);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.warning-tape {
-  background: repeating-linear-gradient(
-    45deg,
-    #000,
-    #000 10px,
-    #f1c40f 10px,
-    #f1c40f 20px
-  );
-  height: 20px;
-}
-
-.caution-border {
-  border: 10px solid;
-  border-image: repeating-linear-gradient(
-    45deg,
-    #000,
-    #000 10px,
-    #f1c40f 10px,
-    #f1c40f 20px
-  ) 10;
-}
-
-@keyframes letterFlicker {
-  0%, 100% { opacity: 1; text-shadow: 0 0 8px rgba(255, 165, 0, 0.8); }
-  50% { opacity: 0.3; text-shadow: none; }
-}
-
-.flicker-letter {
-  display: inline-block;
-  animation: letterFlicker var(--flicker-duration, 3s) infinite;
-  animation-delay: var(--flicker-delay, 0s);
-}
-
-.green-smoke {
-  position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to top, rgba(0, 255, 0, 0.05), transparent);
-  opacity: 0.3;
-  pointer-events: none;
-  z-index: 1;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="filter"><feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" /><feColorMatrix values="0 0 0 0 0 0 0.3 0 0 0 0 0.1 0 0 0 0 0 0 0.3 0"/></filter><rect width="100%" height="100%" filter="url(%23filter)"/></svg>');
+  animation: smokeMove 20s infinite linear;
+  opacity: 0.4;
+  z-index: 2;
 }
 
-.white-smoke {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.1), transparent);
-  opacity: 0.3;
-  pointer-events: none;
-  z-index: 1;
+@keyframes smokeMove {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(3%, 2%) scale(1.03);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+/* Мигающий свет */
+.flashing-light {
+  animation: flashingLight 3s infinite alternate;
+  text-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
+}
+
+@keyframes flashingLight {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    text-shadow: 0 0 15px rgba(241, 196, 15, 0.8),
+                 0 0 30px rgba(241, 196, 15, 0.6);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+/* Анимация тумана */
+@keyframes fog {
+  0% {
+    opacity: 0.05;
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    opacity: 0.1;
+    transform: translateY(2%) translateX(1%);
+  }
+  100% {
+    opacity: 0.05;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+.animate-fog {
+  animation: fog 10s infinite alternate;
+}
+
+/* Анимация факела */
+@keyframes flicker {
+  0%, 100% {
+    box-shadow: 0 0 15px 5px rgba(255, 140, 0, 0.7);
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 165, 0, 0.9) 10%,
+      rgba(255, 140, 0, 0.6) 30%,
+      rgba(139, 0, 0, 0.3) 70%
+    );
+  }
+  50% {
+    box-shadow: 0 0 25px 8px rgba(255, 140, 0, 0.9);
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 255, 0, 0.9) 10%,
+      rgba(255, 165, 0, 0.7) 30%,
+      rgba(255, 140, 0, 0.4) 70%
+    );
+  }
+}
+
+.animate-flicker {
+  animation: flicker 3s infinite alternate;
+}
+
+/* Улучшенные стили для текста */
+.text-glow {
+  text-shadow: 0 0 10px rgba(241, 196, 15, 0.7);
+}
+
+.text-outline {
+  text-shadow: 
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 15px rgba(241, 196, 15, 0.8);
 }
