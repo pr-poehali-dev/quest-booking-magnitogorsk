@@ -2,12 +2,23 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import WarningTape from "@/components/WarningTape";
+import BookingCalendarPicker from "@/components/BookingCalendarPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/use-toast";
 
 const DangerZoneQuest = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  
+  // Заглушка для блокированных дат (в реальном приложении должны загружаться с сервера)
+  const blockedDates = [
+    new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+    new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+    new Date(new Date().getFullYear(), new Date().getMonth(), 25)
+  ];
   
   // Пример временных слотов
   const timeSlots = [
@@ -28,9 +39,25 @@ const DangerZoneQuest = () => {
 
   const handleSubmitBooking = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !phone) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, заполните все поля",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // В реальной ситуации здесь был бы запрос к API для сохранения брони
     setIsBookingOpen(false);
-    alert("Бронь в резерве, скоро с вами свяжется оператор, для уточнения");
+    setName("");
+    setPhone("");
+    
+    toast({
+      title: "Бронь в резерве",
+      description: "Скоро с вами свяжется оператор для уточнения",
+    });
   };
 
   // Определяем цену в зависимости от времени
@@ -53,11 +80,22 @@ const DangerZoneQuest = () => {
           </Button>
         </Link>
         
+        {/* Изображение противогаза в качестве баннера */}
+        <div className="mb-8 flex justify-center">
+          <div className="relative w-full max-w-xl overflow-hidden rounded-lg caution-border">
+            <img 
+              src="https://cdn.poehali.dev/files/4f9bce74-f007-4d58-b954-c43d20ce930d.jpg" 
+              alt="Противогаз - Квест Опасная зона" 
+              className="w-full h-[300px] object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <h1 className="absolute bottom-4 left-0 w-full text-4xl font-bold text-yellow-DEFAULT text-center mb-4 flashing-light">
+              ХОРРОР КВЕСТ!
+            </h1>
+          </div>
+        </div>
+        
         <div className="caution-border p-8 bg-black bg-opacity-80 max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-yellow-DEFAULT text-center mb-4 flashing-light">
-            ХОРРОР КВЕСТ!
-          </h1>
-          
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-orange-DEFAULT mb-2">Сюжет:</h2>
             <p className="text-orange-DEFAULT">
@@ -80,39 +118,40 @@ const DangerZoneQuest = () => {
             </div>
             
             <div className="flex-1">
-              <div className="p-4 border border-yellow-DEFAULT rounded-md bg-black bg-opacity-70">
-                <h3 className="text-xl font-bold text-orange-DEFAULT mb-2">Выберите дату:</h3>
-                <div className="bg-gray-800 rounded-md p-2 text-center">
-                  <p className="text-orange-DEFAULT mb-2">Выберите дату в календаре</p>
-                  <p className="text-yellow-DEFAULT text-sm">(В демо-версии календарь не реализован)</p>
-                </div>
-              </div>
+              {/* Календарь с выбором даты */}
+              <BookingCalendarPicker
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                blockedDates={blockedDates}
+              />
             </div>
           </div>
           
-          <div className="mb-8">
-            <h3 className="text-xl font-bold text-orange-DEFAULT mb-4">Выберите время:</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {timeSlots.map((slot) => (
-                <div key={slot.time} className="text-center">
-                  <button
-                    disabled={!slot.available}
-                    onClick={() => slot.available && handleBookTime(slot.time)}
-                    className={`w-full p-3 border-2 ${
-                      slot.available 
-                        ? "border-yellow-DEFAULT text-yellow-DEFAULT hover:bg-yellow-DEFAULT hover:text-black" 
-                        : "border-red-500 text-red-500 line-through opacity-50"
-                    } bg-black rounded-md transition-colors`}
-                  >
-                    {slot.time}
-                  </button>
-                  <p className="mt-1 text-orange-DEFAULT">
-                    {slot.available ? `${getPrice(slot.time)}₽` : "Недоступно"}
-                  </p>
-                </div>
-              ))}
+          {selectedDate && (
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-orange-DEFAULT mb-4">Выберите время:</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {timeSlots.map((slot) => (
+                  <div key={slot.time} className="text-center">
+                    <button
+                      disabled={!slot.available}
+                      onClick={() => slot.available && handleBookTime(slot.time)}
+                      className={`w-full p-3 border-2 ${
+                        slot.available 
+                          ? "border-yellow-DEFAULT text-yellow-DEFAULT hover:bg-yellow-DEFAULT hover:text-black" 
+                          : "border-red-500 text-red-500 line-through opacity-50"
+                      } bg-black rounded-md transition-colors`}
+                    >
+                      {slot.time}
+                    </button>
+                    <p className="mt-1 text-orange-DEFAULT">
+                      {slot.available ? `${getPrice(slot.time)}₽` : "Недоступно"}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       
@@ -131,6 +170,8 @@ const DangerZoneQuest = () => {
               <label htmlFor="name" className="text-yellow-DEFAULT">Ваше имя</label>
               <input
                 id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full p-2 bg-gray-800 border border-yellow-DEFAULT text-orange-DEFAULT rounded"
                 required
               />
@@ -141,6 +182,8 @@ const DangerZoneQuest = () => {
               <input
                 id="phone"
                 type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="w-full p-2 bg-gray-800 border border-yellow-DEFAULT text-orange-DEFAULT rounded"
                 required
               />

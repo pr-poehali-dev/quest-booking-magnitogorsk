@@ -1,19 +1,26 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import WarningTape from "@/components/WarningTape";
+import BookingCalendarPicker from "@/components/BookingCalendarPicker";
 
 const ArtifactQuest: React.FC = () => {
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+
+  // Заглушка для блокированных дат (в реальном приложении должны загружаться с сервера)
+  const blockedDates = [
+    new Date(new Date().getFullYear(), new Date().getMonth(), 10),
+    new Date(new Date().getFullYear(), new Date().getMonth(), 18),
+    new Date(new Date().getFullYear(), new Date().getMonth(), 27)
+  ];
 
   const times = ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30", "21:00", "22:30"];
   
@@ -32,6 +39,7 @@ const ArtifactQuest: React.FC = () => {
       return;
     }
     
+    // В реальном приложении здесь был бы запрос к API
     toast({
       title: "Бронь в резерве",
       description: "Скоро с вами свяжется оператор для уточнения",
@@ -49,7 +57,8 @@ const ArtifactQuest: React.FC = () => {
 
   const isTimeDisabled = (time: string) => {
     // Здесь можно добавить логику для проверки доступности времени
-    return false;
+    // Например, если время уже прошло или все места забронированы
+    return Math.random() < 0.2; // Для примера блокируем случайные времена
   };
 
   return (
@@ -78,9 +87,23 @@ const ArtifactQuest: React.FC = () => {
             На главную
           </Button>
         </Link>
+
+        {/* Изображение детективного квеста в качестве баннера */}
+        <div className="mb-8 flex justify-center">
+          <div className="relative w-full max-w-xl overflow-hidden rounded-lg border-2 border-yellow-400">
+            <img 
+              src="https://cdn.poehali.dev/files/3fe1b1b2-87e3-4301-85f1-117b241735bd.jpg" 
+              alt="Детективный квест - В поисках артефакта" 
+              className="w-full h-[300px] object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+            <h1 className="absolute bottom-4 left-0 w-full text-3xl md:text-5xl font-bold text-yellow-400 text-center">
+              ДЕТЕКТИВНЫЙ КВЕСТ!
+            </h1>
+          </div>
+        </div>
         
         <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-400 text-orange-400 mb-8">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 text-yellow-400">ДЕТЕКТИВНЫЙ КВЕСТ!</h1>
           <p className="text-lg mb-6">
             <strong>Сюжет:</strong> Вы команда следопытов, которые отправляются на поиски утерянного артефакта. 
             Все сводки говорят о том, что артефакт был украден и спрятан в старом подвале под музеем. 
@@ -96,17 +119,15 @@ const ArtifactQuest: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-400">
-            <h2 className="text-2xl font-bold mb-4 text-yellow-400">Выберите дату</h2>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="border-yellow-400 bg-black/90 rounded-md text-orange-400"
-              disabled={{ before: new Date() }}
+            {/* Календарь с выбором даты */}
+            <BookingCalendarPicker
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              blockedDates={blockedDates}
             />
           </div>
           
-          {date && (
+          {selectedDate && (
             <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-400">
               <h2 className="text-2xl font-bold mb-4 text-yellow-400">Выберите время</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -176,6 +197,8 @@ const ArtifactQuest: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <WarningTape />
     </div>
   );
 };

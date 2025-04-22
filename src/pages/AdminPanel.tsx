@@ -11,6 +11,9 @@ import BookingTable from "@/components/admin/BookingTable";
 import EditBookingDialog from "@/components/admin/EditBookingDialog";
 import ReceiptDialog from "@/components/admin/ReceiptDialog";
 import QuestTabContent from "@/components/admin/QuestTabContent";
+import BlockDateDialog from "@/components/admin/BlockDateDialog";
+import AdminBookingForm from "@/components/admin/AdminBookingForm";
+import AdminSettings from "@/components/admin/AdminSettings";
 
 // Импорт типов
 import { Booking } from "@/types/booking";
@@ -43,14 +46,39 @@ const mockBookings: Booking[] = [
   }
 ];
 
+// Заглушка для заблокированных дат
+const initialBlockedDates = [
+  new Date(2024, 8, 10),
+  new Date(2024, 8, 20),
+  new Date(2024, 8, 25)
+];
+
+interface AdminUser {
+  id: string;
+  username: string;
+  password: string;
+  name: string;
+  role: 'admin' | 'superadmin';
+}
+
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>(mockBookings);
+  const [blockedDates, setBlockedDates] = useState<Date[]>(initialBlockedDates);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [blockDateDialogOpen, setBlockDateDialogOpen] = useState(false);
+  const [createBookingDialogOpen, setCreateBookingDialogOpen] = useState(false);
   const [editedBooking, setEditedBooking] = useState<Partial<Booking>>({});
+  const [currentUser, setCurrentUser] = useState<AdminUser>({
+    id: '1',
+    username: 'NiKiTa Kvest',
+    password: 'admin1408',
+    name: 'Никита',
+    role: 'admin'
+  });
   
   // Доступные временные слоты
   const times = ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30", "21:00", "22:30"];
@@ -136,6 +164,36 @@ const AdminPanel: React.FC = () => {
     setReceiptDialogOpen(false);
     setEditDialogOpen(false);
   };
+
+  // Блокировка дат
+  const handleBlockDates = (dates: Date[], reason: string) => {
+    setBlockedDates([...blockedDates, ...dates]);
+    toast({
+      title: `Заблокировано дат: ${dates.length}`,
+      description: `Причина: ${reason}`,
+    });
+  };
+
+  // Создание новой брони администратором
+  const handleCreateBooking = (bookingData: Omit<Booking, 'id'>) => {
+    const newBooking: Booking = {
+      ...bookingData,
+      id: `booking-${Date.now()}`
+    };
+    
+    setBookings([...bookings, newBooking]);
+    toast({
+      title: "Бронь создана",
+      description: `Новая бронь для ${bookingData.name} успешно создана`,
+    });
+  };
+
+  // Обновление данных администратора
+  const handleSaveSettings = (user: AdminUser) => {
+    setCurrentUser(user);
+    // В реальном приложении здесь был бы запрос к API для обновления данных
+    localStorage.setItem('adminUser', JSON.stringify(user));
+  };
   
   // Выход из админ-панели
   const handleLogout = () => {
@@ -155,21 +213,46 @@ const AdminPanel: React.FC = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-yellow-400">Панель администратора</h1>
           
-          <Button 
-            variant="outline" 
-            className="text-yellow-400 border-yellow-400 hover:bg-yellow-950 hover:text-yellow-300"
-            onClick={handleLogout}
-          >
-            Выйти
-          </Button>
+          <div className="flex space-x-4">
+            <AdminSettings currentUser={currentUser} onSaveSettings={handleSaveSettings} />
+            
+            <Button 
+              variant="outline" 
+              className="text-yellow-400 border-yellow-400 hover:bg-yellow-950 hover:text-yellow-300"
+              onClick={handleLogout}
+            >
+              Выйти
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
           {/* Календарь выбора даты */}
-          <BookingCalendar 
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
+          <div className="space-y-4">
+            <BookingCalendar 
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+            
+            <div className="bg-black/80 p-4 rounded-lg border-2 border-yellow-400">
+              <h2 className="text-xl font-bold mb-4 text-yellow-400">Действия</h2>
+              <div className="space-y-2">
+                <Button 
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-black"
+                  onClick={() => setCreateBookingDialogOpen(true)}
+                >
+                  Создать бронь
+                </Button>
+                
+                <Button 
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => setBlockDateDialogOpen(true)}
+                >
+                  Блокировать даты
+                </Button>
+              </div>
+            </div>
+          </div>
           
           {/* Табы с квестами */}
           <div className="bg-black/80 p-4 rounded-lg border-2 border-yellow-400">
@@ -243,6 +326,21 @@ const AdminPanel: React.FC = () => {
         booking={selectedBooking}
         editedBooking={editedBooking}
         onSave={handleSaveReceipt}
+      />
+      
+      <BlockDateDialog
+        isOpen={blockDateDialogOpen}
+        onClose={() => setBlockDateDialogOpen(false)}
+        onBlock={handleBlockDates}
+        blockedDates={blockedDates}
+      />
+      
+      <AdminBookingForm
+        isOpen={createBookingDialogOpen}
+        onClose={() => setCreateBookingDialogOpen(false)}
+        onSave={handleCreateBooking}
+        blockedDates={blockedDates}
+        existingBookings={bookings}
       />
     </div>
   );
