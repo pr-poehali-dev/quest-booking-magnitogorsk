@@ -22,10 +22,15 @@ const AdminLogin: React.FC = () => {
     );
 
     if (isValid) {
+      // Сохраняем статус аутентификации в localStorage
+      localStorage.setItem('adminAuthenticated', 'true');
+      
       toast({
         title: "Успешный вход",
         description: "Добро пожаловать в панель администратора",
       });
+      
+      // Перенаправление на админ-панель
       navigate("/admin-panel");
     } else {
       toast({
@@ -46,7 +51,7 @@ const AdminLogin: React.FC = () => {
         <WarningTape />
         
         <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="bg-black/80 p-8 rounded-lg border-2 border-yellow-400 text-orange-400 w-full max-w-md">
+          <div className="bg-black/80 p-8 rounded-lg border-2 border-yellow-400 text-orange-500 w-full max-w-md">
             <h1 className="text-3xl font-bold mb-6 text-yellow-400 text-center">Вход для администраторов</h1>
             
             <div className="space-y-4">
@@ -56,7 +61,7 @@ const AdminLogin: React.FC = () => {
                   id="username" 
                   value={username} 
                   onChange={(e) => setUsername(e.target.value)} 
-                  className="bg-black/50 border-yellow-400 text-orange-400"
+                  className="bg-black/50 border-yellow-400 text-orange-500"
                 />
               </div>
               
@@ -67,7 +72,7 @@ const AdminLogin: React.FC = () => {
                   type="password"
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
-                  className="bg-black/50 border-yellow-400 text-orange-400"
+                  className="bg-black/50 border-yellow-400 text-orange-500"
                 />
               </div>
               
