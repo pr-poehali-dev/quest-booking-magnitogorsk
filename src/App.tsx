@@ -25,6 +25,7 @@ const App = () => (
           <Route path="/artifact-quest" element={<ArtifactQuest />} />
           <Route path="/tea-zone" element={<TeaZone />} />
           <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

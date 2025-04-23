@@ -14,7 +14,7 @@ const Index = () => {
         
         {/* Кнопка для входа администраторов */}
         <div className="absolute top-4 right-4 z-20">
-          <Link to="/admin-login">
+          <Link to="/admin">
             <Button 
               variant="outline" 
               className="bg-black bg-opacity-80 border-2 border-yellow-neon hover:bg-yellow-neon hover:text-black transition-all duration-300"
