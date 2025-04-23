@@ -1,7 +1,9 @@
 import FlickeringTitle from "@/components/FlickeringTitle";
 import WarningTape from "@/components/WarningTape";
 import QuestCard from "@/components/QuestCard";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, UserCog } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   return (
@@ -9,6 +11,19 @@ const Index = () => {
       <div className="container mx-auto px-4 py-12 relative z-10">
         {/* Верхняя черно-желтая лента */}
         <WarningTape />
+        
+        {/* Кнопка для входа администраторов */}
+        <div className="absolute top-4 right-4 z-20">
+          <Link to="/admin-login">
+            <Button 
+              variant="outline" 
+              className="bg-black bg-opacity-80 border-2 border-yellow-neon hover:bg-yellow-neon hover:text-black transition-all duration-300"
+            >
+              <UserCog className="mr-2" />
+              <span className="font-bold">Администратор</span>
+            </Button>
+          </Link>
+        </div>
         
         {/* Название сайта с мигающими буквами */}
         <div className="py-10">
@@ -25,11 +40,11 @@ const Index = () => {
             ВНИМАНИЕ!
           </p>
           
-          <p className="text-xl text-orange-bright font-bold mb-4 text-glow">
+          <p className="text-xl text-orange-500 font-bold mb-4 text-glow">
             Вход в состоянии алкогольного и наркотического опьянения строго запрещен!
           </p>
           
-          <p className="text-xl text-orange-bright text-glow">
+          <p className="text-xl text-orange-500 text-glow">
             Также на квесте вам предстоит поползать, возьмите удобную обувь и одежду!
           </p>
         </div>
@@ -38,19 +53,19 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto my-16">
           <QuestCard 
             title="Опасная зона" 
-            image="/placeholder.svg" 
+            image="/danger-zone.jpg" 
             alt="Противогаз" 
             link="/danger-zone" 
           />
           <QuestCard 
             title="В поисках артефакта" 
-            image="/placeholder.svg" 
+            image="/artifact-quest.jpg" 
             alt="Золотая монета" 
             link="/artifact-quest" 
           />
           <QuestCard 
             title="Чайная зона" 
-            image="/placeholder.svg" 
+            image="/tea-zone.jpg" 
             alt="Чай и еда" 
             link="/tea-zone" 
           />
@@ -63,21 +78,21 @@ const Index = () => {
               Информация для бронирования
             </h3>
             
-            <p className="text-xl text-orange-bright mb-3 text-glow">
+            <p className="text-xl text-orange-500 mb-3 text-glow">
               По вопросам бронирования вы можете связаться с администратором по номеру телефона
             </p>
             
-            <p className="text-2xl text-yellow-bright mb-5 font-bold text-outline">
+            <p className="text-2xl text-yellow-neon mb-5 font-bold text-outline">
               +7 (999) 123-45-67
             </p>
             
-            <p className="text-xl text-orange-bright mb-2 text-glow">
+            <p className="text-xl text-orange-500 mb-2 text-glow">
               или в сообщениях группы ВК:
             </p>
             
             <a 
               href="https://vk.com/kvest_chekcout" 
-              className="text-xl text-yellow-neon underline hover:text-yellow-bright transition-colors inline-block text-outline"
+              className="text-xl text-yellow-neon underline hover:text-yellow-500 transition-colors inline-block text-outline"
               target="_blank" 
               rel="noopener noreferrer"
             >
@@ -91,8 +106,8 @@ const Index = () => {
       </div>
       
       {/* Декоративные элементы */}
-      <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-yellow-DEFAULT opacity-10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-orange-DEFAULT opacity-10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-yellow-500 opacity-10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-orange-500 opacity-10 rounded-full blur-3xl animate-pulse"></div>
     </div>
   );
 };
