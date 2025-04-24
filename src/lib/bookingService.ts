@@ -3,6 +3,12 @@ import { Booking } from "@/types/booking";
 // Ключи для хранения данных в localStorage
 const BOOKINGS_STORAGE_KEY = "checkoutQuest_bookings";
 const BLOCKED_DATES_KEY = "checkoutQuest_blockedDates";
+const SETTINGS_KEY = "checkoutQuest_settings";
+
+// Интерфейс настроек
+interface Settings {
+  supportPhone: string;
+}
 
 // Интерфейс для синхронизированного хранилища бронирований
 interface BookingStorage {
@@ -10,11 +16,14 @@ interface BookingStorage {
   addBooking: (booking: Booking) => void;
   updateBooking: (bookingId: string, updatedBooking: Booking) => boolean;
   deleteBooking: (bookingId: string) => boolean;
-  isTimeSlotAvailable: (date: Date, timeSlot: string, questId: string) => boolean;
-  getBookingsForDate: (date: Date, questId?: string) => Booking[];
+  isTimeSlotAvailable: (date: Date, time: string, questType: string) => boolean;
+  isTimeAvailable: (date: Date, time: string) => boolean;
+  getBookingsForDate: (date: Date, questType?: string) => Booking[];
   getBlockedDates: () => Date[];
   addBlockedDate: (date: Date) => void;
   removeBlockedDate: (date: Date) => boolean;
+  getSupportPhone: () => string;
+  setSupportPhone: (phone: string) => void;
 }
 
 // Singleton-сервис для работы с бронированиями
@@ -42,13 +51,18 @@ const bookingService: BookingStorage = {
     const bookings = bookingService.getBookings();
     
     // Проверка доступности времени
-    if (!bookingService.isTimeSlotAvailable(booking.date, booking.timeSlot, booking.questId)) {
+    if (!bookingService.isTimeSlotAvailable(booking.date, booking.time, booking.questType)) {
       throw new Error("Это время уже забронировано");
     }
     
     // Генерация уникального ID, если он не был предоставлен
     if (!booking.id) {
       booking.id = Date.now().toString();
+    }
+    
+    // Задаем статус pending (ожидание) для новых броней от пользователей
+    if (!booking.status) {
+      booking.status = 'pending';
     }
     
     // Сохранение бронирования
@@ -69,14 +83,14 @@ const bookingService: BookingStorage = {
     // Проверка на занятость времени, если оно было изменено
     const originalBooking = bookings[index];
     if (
-      originalBooking.timeSlot !== updatedBooking.timeSlot || 
-      originalBooking.date.getTime() !== updatedBooking.date.getTime() ||
-      originalBooking.questId !== updatedBooking.questId
+      originalBooking.time !== updatedBooking.time || 
+      originalBooking.date.toDateString() !== updatedBooking.date.toDateString() ||
+      originalBooking.questType !== updatedBooking.questType
     ) {
       const isAvailable = bookingService.isTimeSlotAvailable(
         updatedBooking.date, 
-        updatedBooking.timeSlot,
-        updatedBooking.questId
+        updatedBooking.time,
+        updatedBooking.questType
       );
       
       if (!isAvailable) {
@@ -109,8 +123,25 @@ const bookingService: BookingStorage = {
     return true;
   },
 
+  // Проверить, не прошло ли уже выбранное время
+  isTimeAvailable: (date: Date, timeStr: string): boolean => {
+    const now = new Date();
+    const bookingDate = new Date(date);
+    
+    // Установка времени для бронирования
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    bookingDate.setHours(hours, minutes, 0, 0);
+    
+    // Проверка на минимальное время до начала (1 час)
+    const msInHour = 60 * 60 * 1000;
+    const minimumTimeBeforeBooking = 1 * msInHour; // 1 час в миллисекундах
+    
+    // Если бронирование в прошлом или меньше чем за час до начала - недоступно
+    return bookingDate.getTime() > (now.getTime() + minimumTimeBeforeBooking);
+  },
+
   // Проверить доступность временного слота
-  isTimeSlotAvailable: (date: Date, timeSlot: string, questId: string): boolean => {
+  isTimeSlotAvailable: (date: Date, time: string, questType: string): boolean => {
     const bookings = bookingService.getBookings();
     const dateString = date.toDateString();
     
@@ -120,22 +151,27 @@ const bookingService: BookingStorage = {
       return false;
     }
     
+    // Проверка на прошедшее время
+    if (!bookingService.isTimeAvailable(date, time)) {
+      return false;
+    }
+    
     // Проверка на существующие бронирования
     return !bookings.some(booking => 
       booking.date.toDateString() === dateString && 
-      booking.timeSlot === timeSlot &&
-      booking.questId === questId
+      booking.time === time &&
+      booking.questType === questType
     );
   },
 
   // Получить бронирования для конкретной даты и квеста
-  getBookingsForDate: (date: Date, questId?: string): Booking[] => {
+  getBookingsForDate: (date: Date, questType?: string): Booking[] => {
     const bookings = bookingService.getBookings();
     const dateString = date.toDateString();
     
     return bookings.filter(booking => 
       booking.date.toDateString() === dateString &&
-      (questId ? booking.questId === questId : true)
+      (questType ? booking.questType === questType : true)
     );
   },
 
@@ -191,6 +227,27 @@ const bookingService: BookingStorage = {
     // Отправляем событие синхронизации
     window.dispatchEvent(new CustomEvent('blocked-dates-updated'));
     return true;
+  },
+
+  // Получить телефон поддержки
+  getSupportPhone: (): string => {
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') as Settings;
+      return settings.supportPhone || '+7 (999) 123-45-67';
+    } catch (error) {
+      return '+7 (999) 123-45-67';
+    }
+  },
+
+  // Установить телефон поддержки
+  setSupportPhone: (phone: string): void => {
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') as Settings;
+      settings.supportPhone = phone;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error("Ошибка при сохранении настроек:", error);
+    }
   }
 };
 

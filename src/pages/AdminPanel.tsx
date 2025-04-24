@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import WarningTape from "@/components/WarningTape";
+import useBookingSync from "@/hooks/useBookingSync";
 
 // Импорт компонентов для админ-панели
 import BookingCalendar from "@/components/admin/BookingCalendar";
@@ -18,53 +19,31 @@ import AdminSettings from "@/components/admin/AdminSettings";
 // Импорт типов
 import { Booking } from "@/types/booking";
 
-// Заглушка данных
-const mockBookings: Booking[] = [
-  {
-    id: '1',
-    questType: 'danger',
-    date: new Date(2024, 8, 15),
-    time: '15:00',
-    name: 'Алексей',
-    phone: '+7 900 123 45 67',
-    status: 'pending'
-  },
-  {
-    id: '2',
-    questType: 'artifact',
-    date: new Date(2024, 8, 16),
-    time: '18:00',
-    name: 'Елена',
-    phone: '+7 911 987 65 43',
-    age: '14+',
-    peopleCount: 5,
-    prepayment: 2000,
-    payment: 4500,
-    teaZone: true,
-    status: 'confirmed',
-    notes: 'День рождения'
-  }
-];
-
-// Заглушка для заблокированных дат
-const initialBlockedDates = [
-  new Date(2024, 8, 10),
-  new Date(2024, 8, 20),
-  new Date(2024, 8, 25)
-];
-
 interface AdminUser {
   id: string;
   username: string;
   password: string;
   name: string;
   role: 'admin' | 'superadmin';
+  supportPhone: string;
 }
 
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings);
-  const [blockedDates, setBlockedDates] = useState<Date[]>(initialBlockedDates);
+  const { 
+    bookings, 
+    blockedDates, 
+    isLoading,
+    refreshData,
+    addBooking,
+    updateBooking,
+    deleteBooking,
+    addBlockedDate,
+    removeBlockedDate,
+    getBookingsForDate,
+    isTimeSlotAvailable
+  } = useBookingSync();
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -72,25 +51,31 @@ const AdminPanel: React.FC = () => {
   const [blockDateDialogOpen, setBlockDateDialogOpen] = useState(false);
   const [createBookingDialogOpen, setCreateBookingDialogOpen] = useState(false);
   const [editedBooking, setEditedBooking] = useState<Partial<Booking>>({});
-  const [currentUser, setCurrentUser] = useState<AdminUser>({
-    id: '1',
-    username: 'NiKiTa Kvest',
-    password: 'admin1408',
-    name: 'Никита',
-    role: 'admin'
+  const [currentUser, setCurrentUser] = useState<AdminUser>(() => {
+    const savedUser = localStorage.getItem('adminUser');
+    return savedUser ? JSON.parse(savedUser) : {
+      id: '1',
+      username: 'NiKiTa Kvest',
+      password: 'admin1408',
+      name: 'Никита',
+      role: 'admin',
+      supportPhone: '+7 (999) 123-45-67'
+    };
   });
   
   // Доступные временные слоты
   const times = ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30", "21:00", "22:30"];
   
-  // Проверка авторизации (в реальном приложении использовать контекст авторизации)
+  // Проверка авторизации при загрузке
   useEffect(() => {
-    // Симуляция проверки авторизации
     const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
     if (!isAuthenticated) {
       navigate('/admin');
+    } else {
+      // Загружаем данные при входе на страницу
+      refreshData();
     }
-  }, [navigate]);
+  }, [navigate, refreshData]);
   
   // Открытие диалога редактирования брони
   const handleOpenEditDialog = (booking: Booking) => {
@@ -101,40 +86,57 @@ const AdminPanel: React.FC = () => {
   
   // Сохранение изменений в брони
   const handleSaveBooking = () => {
-    if (!selectedBooking) return;
+    if (!selectedBooking || !editedBooking) return;
     
-    const updatedBookings = bookings.map(booking => 
-      booking.id === selectedBooking.id ? { ...booking, ...editedBooking } : booking
-    );
-    
-    setBookings(updatedBookings);
-    setEditDialogOpen(false);
-    toast({
-      title: "Бронь обновлена",
-      description: `Данные для ${selectedBooking.name} успешно обновлены`,
-    });
+    try {
+      // Обновляем бронирование в системе
+      updateBooking(selectedBooking.id, { 
+        ...selectedBooking, 
+        ...editedBooking as Booking 
+      });
+      
+      setEditDialogOpen(false);
+      toast({
+        title: "Бронь обновлена",
+        description: `Данные для ${selectedBooking.name} успешно обновлены`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка обновления",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive"
+      });
+    }
   };
   
-  // Подтверждение брони (с чеком или без)
+  // Подтверждение брони
   const handleConfirmBooking = (withReceipt: boolean) => {
     if (!selectedBooking) return;
     
-    const updatedBooking = { ...selectedBooking, ...editedBooking, status: 'confirmed' as const };
-    
-    const updatedBookings = bookings.map(booking => 
-      booking.id === selectedBooking.id ? updatedBooking : booking
-    );
-    
-    setBookings(updatedBookings);
-    setSelectedBooking(updatedBooking);
-    
-    if (withReceipt) {
-      setReceiptDialogOpen(true);
-    } else {
-      setEditDialogOpen(false);
+    try {
+      const updatedBooking = { 
+        ...selectedBooking, 
+        ...editedBooking as Booking, 
+        status: 'confirmed' as const 
+      };
+      
+      updateBooking(selectedBooking.id, updatedBooking);
+      setSelectedBooking(updatedBooking);
+      
+      if (withReceipt) {
+        setReceiptDialogOpen(true);
+      } else {
+        setEditDialogOpen(false);
+        toast({
+          title: "Бронь подтверждена",
+          description: `Бронь для ${selectedBooking.name} успешно подтверждена`,
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Бронь подтверждена",
-        description: `Бронь для ${selectedBooking.name} успешно подтверждена`,
+        title: "Ошибка подтверждения",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive"
       });
     }
   };
@@ -143,20 +145,25 @@ const AdminPanel: React.FC = () => {
   const handleCancelBooking = () => {
     if (!selectedBooking) return;
     
-    const updatedBookings = bookings.filter(booking => booking.id !== selectedBooking.id);
-    
-    setBookings(updatedBookings);
-    setEditDialogOpen(false);
-    toast({
-      title: "Бронь отменена",
-      description: `Бронь для ${selectedBooking.name} была отменена`,
-      variant: "destructive"
-    });
+    try {
+      deleteBooking(selectedBooking.id);
+      setEditDialogOpen(false);
+      toast({
+        title: "Бронь отменена",
+        description: `Бронь для ${selectedBooking.name} была отменена`,
+        variant: "destructive"
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка отмены",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive"
+      });
+    }
   };
   
   // Сохранение чека
   const handleSaveReceipt = () => {
-    // В реальном приложении здесь был бы код для сохранения чека
     toast({
       title: "Чек сохранен",
       description: "Чек был сохранен в галерею",
@@ -167,32 +174,58 @@ const AdminPanel: React.FC = () => {
 
   // Блокировка дат
   const handleBlockDates = (dates: Date[], reason: string) => {
-    setBlockedDates([...blockedDates, ...dates]);
+    dates.forEach(date => addBlockedDate(date));
+    
     toast({
       title: `Заблокировано дат: ${dates.length}`,
       description: `Причина: ${reason}`,
+    });
+    
+    setBlockDateDialogOpen(false);
+  };
+
+  // Разблокировка даты
+  const handleUnblockDate = (date: Date) => {
+    removeBlockedDate(date);
+    toast({
+      title: "Дата разблокирована",
+      description: `Дата ${date.toLocaleDateString()} была разблокирована`,
     });
   };
 
   // Создание новой брони администратором
   const handleCreateBooking = (bookingData: Omit<Booking, 'id'>) => {
-    const newBooking: Booking = {
-      ...bookingData,
-      id: `booking-${Date.now()}`
-    };
-    
-    setBookings([...bookings, newBooking]);
-    toast({
-      title: "Бронь создана",
-      description: `Новая бронь для ${bookingData.name} успешно создана`,
-    });
+    try {
+      const newBooking: Booking = {
+        ...bookingData,
+        id: `booking-${Date.now()}`
+      };
+      
+      addBooking(newBooking);
+      setCreateBookingDialogOpen(false);
+      
+      toast({
+        title: "Бронь создана",
+        description: `Новая бронь для ${bookingData.name} успешно создана`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка создания брони",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive"
+      });
+    }
   };
 
   // Обновление данных администратора
   const handleSaveSettings = (user: AdminUser) => {
     setCurrentUser(user);
-    // В реальном приложении здесь был бы запрос к API для обновления данных
     localStorage.setItem('adminUser', JSON.stringify(user));
+    
+    toast({
+      title: "Настройки сохранены",
+      description: "Данные администратора успешно обновлены",
+    });
   };
   
   // Выход из админ-панели
@@ -200,6 +233,14 @@ const AdminPanel: React.FC = () => {
     localStorage.removeItem('adminAuthenticated');
     navigate('/admin');
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#7c0000] flex items-center justify-center">
+        <div className="text-4xl text-yellow-400 animate-pulse">Загрузка данных...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#7c0000] relative overflow-hidden">
@@ -210,10 +251,13 @@ const AdminPanel: React.FC = () => {
       <div className="container mx-auto relative z-10 px-4 py-8">
         <WarningTape />
         
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-yellow-400">Панель администратора</h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <h1 className="text-3xl font-bold text-yellow-400 glow-text">Панель администратора</h1>
           
-          <div className="flex space-x-4">
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+            <div className="text-orange-400 text-sm md:text-base">
+              Телефон поддержки: <span className="font-bold">{currentUser.supportPhone}</span>
+            </div>
             <AdminSettings currentUser={currentUser} onSaveSettings={handleSaveSettings} />
             
             <Button 
@@ -226,12 +270,14 @@ const AdminPanel: React.FC = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-8">
           {/* Календарь выбора даты */}
           <div className="space-y-4">
             <BookingCalendar 
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              blockedDates={blockedDates}
+              onUnblockDate={handleUnblockDate}
             />
             
             <div className="bg-black/80 p-4 rounded-lg border-2 border-yellow-400">

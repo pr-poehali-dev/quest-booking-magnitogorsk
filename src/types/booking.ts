@@ -1,6 +1,6 @@
 export interface Booking {
   id: string;
-  questType: 'danger' | 'artifact';
+  questType: string;
   date: Date;
   time: string;
   name: string;
@@ -10,6 +10,6 @@ export interface Booking {
   prepayment?: number;
   payment?: number;
   teaZone?: boolean;
-  status: 'pending' | 'confirmed';
+  status: 'pending' | 'confirmed' | 'cancelled';
   notes?: string;
 }

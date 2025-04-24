@@ -35,6 +35,10 @@ const BookingTable: React.FC<BookingTableProps> = ({
             <th className="py-2 px-3">Время</th>
             <th className="py-2 px-3">Имя</th>
             <th className="py-2 px-3">Телефон</th>
+            <th className="py-2 px-3">Человек</th>
+            <th className="py-2 px-3">Возраст</th>
+            <th className="py-2 px-3">Оплата</th>
+            <th className="py-2 px-3">Чай</th>
             <th className="py-2 px-3">Статус</th>
             <th className="py-2 px-3">Действия</th>
           </tr>
@@ -48,6 +52,19 @@ const BookingTable: React.FC<BookingTableProps> = ({
               <td className="py-2 px-3">{booking.time}</td>
               <td className="py-2 px-3">{booking.name}</td>
               <td className="py-2 px-3">{booking.phone}</td>
+              <td className="py-2 px-3">{booking.peopleCount || '—'}</td>
+              <td className="py-2 px-3">{booking.age || '—'}</td>
+              <td className="py-2 px-3">
+                {booking.payment ? (
+                  <span>
+                    {booking.prepayment && `${booking.prepayment}₽ + `}
+                    {booking.payment}₽
+                  </span>
+                ) : '—'}
+              </td>
+              <td className="py-2 px-3">
+                {booking.teaZone ? '✓' : '—'}
+              </td>
               <td className="py-2 px-3">
                 <span className={`px-2 py-1 rounded text-sm ${
                   booking.status === 'confirmed' 
@@ -70,6 +87,18 @@ const BookingTable: React.FC<BookingTableProps> = ({
           ))}
         </tbody>
       </table>
+
+      {/* Подробная информация о примечаниях */}
+      <div className="mt-4 space-y-2">
+        {dateBookings.filter(b => b.notes).map((booking) => (
+          <div key={`notes-${booking.id}`} className="bg-black/40 p-3 rounded-md">
+            <div className="font-bold text-yellow-400">
+              Примечания для {booking.name} ({booking.time}):
+            </div>
+            <div className="text-orange-300 mt-1">{booking.notes}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -17,6 +17,7 @@ interface AdminUser {
   password: string;
   name: string;
   role: 'admin' | 'superadmin';
+  supportPhone: string;
 }
 
 interface AdminSettingsProps {
@@ -115,6 +116,18 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ currentUser, onSaveSettin
               {passwordError && (
                 <p className="text-red-500 text-sm">{passwordError}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supportPhone">Телефон поддержки</Label>
+              <Input 
+                id="supportPhone"
+                value={editedUser.supportPhone || "+7 (999) 123-45-67"}
+                onChange={(e) => setEditedUser({ ...editedUser, supportPhone: e.target.value })}
+                className="bg-black/50 border-yellow-400 text-orange-400"
+                placeholder="+7 (999) 123-45-67"
+              />
+              <p className="text-xs text-yellow-300">Этот номер будет отображаться на сайте для клиентов</p>
             </div>
 
             <div className="pt-4">

@@ -1,55 +1,87 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/booking";
+import bookingService from "@/lib/bookingService";
 
 interface TimeSlotButtonProps {
   time: string;
-  questType: 'danger' | 'artifact';
-  bookings: Booking[];
   selectedDate: Date | undefined;
+  bookings: Booking[];
+  questType: string;
   onOpenEditDialog: (booking: Booking) => void;
 }
 
 const TimeSlotButton: React.FC<TimeSlotButtonProps> = ({
   time,
-  questType,
-  bookings,
   selectedDate,
-  onOpenEditDialog
+  bookings,
+  questType,
+  onOpenEditDialog,
 }) => {
-  const getBookingsForTime = () => {
-    if (!selectedDate) return [];
-    return bookings.filter(booking => 
-      booking.date.toDateString() === selectedDate.toDateString() && 
-      booking.time === time &&
-      booking.questType === questType
-    );
-  };
+  if (!selectedDate) return null;
 
-  const timeBookings = getBookingsForTime();
-  const hasBooking = timeBookings.length > 0;
-  const booking = timeBookings[0];
+  // Проверка, заблокирована ли дата полностью
+  const blockedDates = bookingService.getBlockedDates();
+  const isDateBlocked = blockedDates.some(
+    (date) => date.toDateString() === selectedDate.toDateString()
+  );
+
+  // Проверка, прошло ли уже время или менее часа до начала
+  const isTimePassed = !bookingService.isTimeAvailable(selectedDate, time);
+
+  // Найти бронирование для данного времени и даты
+  const booking = bookings.find(
+    (b) =>
+      b.date.toDateString() === selectedDate.toDateString() &&
+      b.time === time &&
+      b.questType === questType
+  );
+
+  // Определение состояния кнопки
+  let buttonVariant: "default" | "outline" | "destructive" | "ghost" | "link" | "secondary" | null | undefined;
+  let buttonText: string;
+  let buttonDisabled: boolean = false;
+
+  if (isDateBlocked) {
+    buttonVariant = "ghost";
+    buttonText = "Заблокировано";
+    buttonDisabled = true;
+  } else if (isTimePassed) {
+    buttonVariant = "ghost";
+    buttonText = "Недоступно";
+    buttonDisabled = true;
+  } else if (booking) {
+    if (booking.status === "confirmed") {
+      buttonVariant = "destructive"; // Красная кнопка для подтвержденных броней
+      buttonText = `${booking.name} ✓`;
+    } else {
+      buttonVariant = "secondary"; // Желтая кнопка для ожидающих броней
+      buttonText = `${booking.name} ⌛`;
+    }
+  } else {
+    buttonVariant = "outline";
+    buttonText = "Свободно";
+  }
 
   return (
-    <div className="text-center">
-      <Button
-        onClick={() => hasBooking && onOpenEditDialog(booking)}
-        variant="outline"
-        className={`w-full h-16 text-lg font-bold mb-2 border-2 ${
-          hasBooking 
-            ? booking.status === 'confirmed'
-              ? 'bg-green-900/30 text-green-400 border-green-500'
-              : 'bg-yellow-900/30 text-yellow-400 border-yellow-500'
-            : 'text-gray-500 border-gray-500'
-        }`}
-      >
-        {time}
-        {hasBooking && booking.teaZone && <span className="ml-2 text-blue-400">С</span>}
-        {hasBooking && booking.status === 'confirmed' && 
-          <span className="ml-2 text-green-400">✓</span>
+    <Button
+      variant={buttonVariant}
+      className={`w-full h-12 text-sm ${
+        booking
+          ? booking.status === "confirmed"
+            ? "bg-green-700 hover:bg-green-800 text-white"
+            : "bg-yellow-600 hover:bg-yellow-700 text-black"
+          : "text-gray-100 hover:bg-yellow-900/20"
+      }`}
+      disabled={buttonDisabled}
+      onClick={() => {
+        if (booking) {
+          onOpenEditDialog(booking);
         }
-      </Button>
-    </div>
+      }}
+    >
+      {time} - {buttonText}
+    </Button>
   );
 };
 
