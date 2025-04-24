@@ -25,22 +25,24 @@ const FlickeringTitle = () => {
       }));
       
       // Возвращаем букву к исходному состоянию через случайное время
+      // Увеличено время восстановления буквы
       setTimeout(() => {
         setFlickeringLetters(prev => ({
           ...prev,
           [letterIndex]: true
         }));
-      }, Math.random() * 500 + 100);
+      }, Math.random() * 700 + 200); // Увеличено время с 500+100 до 700+200
     };
 
     // Запускаем мигание с интервалом
+    // Увеличен интервал для замедления эффекта мигания
     const interval = setInterval(() => {
-      // Мигание от 1 до 3 букв за раз
-      const flickerCount = Math.floor(Math.random() * 3) + 1;
+      // Мигание от 1 до 2 букв за раз (уменьшено с 1-3)
+      const flickerCount = Math.floor(Math.random() * 2) + 1;
       for (let i = 0; i < flickerCount; i++) {
-        setTimeout(flickerRandomLetter, Math.random() * 200);
+        setTimeout(flickerRandomLetter, Math.random() * 300); // Увеличено с 200 до 300
       }
-    }, 300);
+    }, 800); // Значительно увеличен интервал с 300 до 800 мс
 
     return () => clearInterval(interval);
   }, [title, subtitle]);
@@ -52,7 +54,7 @@ const FlickeringTitle = () => {
       ${isTitle ? 'text-5xl md:text-7xl lg:text-9xl' : 'text-2xl md:text-3xl lg:text-4xl'} 
       inline-block font-bold 
       ${visible ? 'text-yellow-neon opacity-100' : 'text-yellow-neon opacity-0'} 
-      transition-opacity duration-100
+      transition-opacity duration-200
       ${visible ? 'text-outline animate-glow' : ''}
     `;
     
