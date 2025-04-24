@@ -30,23 +30,24 @@ const useBookingSync = (dependencies: any[] = []) => {
       window.removeEventListener('bookings-updated', handleBookingsUpdate);
       window.removeEventListener('blocked-dates-updated', handleBookingsUpdate);
     };
-  }, [...dependencies]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // Важно: пустой массив зависимостей предотвращает бесконечные циклы
 
   // Методы для работы с бронированиями
   const addBooking = (booking: Booking) => {
     bookingService.addBooking(booking);
-    refreshData();
+    // Не вызываем refreshData() здесь, так как это вызовет событие
   };
 
   const updateBooking = (bookingId: string, booking: Booking) => {
     const result = bookingService.updateBooking(bookingId, booking);
-    refreshData();
+    // Не вызываем refreshData() здесь, так как это вызовет событие
     return result;
   };
 
   const deleteBooking = (bookingId: string) => {
     const result = bookingService.deleteBooking(bookingId);
-    refreshData();
+    // Не вызываем refreshData() здесь, так как это вызовет событие
     return result;
   };
 
@@ -61,12 +62,12 @@ const useBookingSync = (dependencies: any[] = []) => {
   // Методы для работы с заблокированными датами
   const addBlockedDate = (date: Date) => {
     bookingService.addBlockedDate(date);
-    refreshData();
+    // Не вызываем refreshData() здесь, так как это вызовет событие
   };
 
   const removeBlockedDate = (date: Date) => {
     const result = bookingService.removeBlockedDate(date);
-    refreshData();
+    // Не вызываем refreshData() здесь, так как это вызовет событие
     return result;
   };
 

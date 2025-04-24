@@ -10,6 +10,13 @@ interface Settings {
   supportPhone: string;
 }
 
+// Функция для отправки событий с задержкой
+const dispatchEventWithDelay = (eventName: string, delay = 100) => {
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent(eventName));
+  }, delay);
+};
+
 // Интерфейс для синхронизированного хранилища бронирований
 interface BookingStorage {
   getBookings: () => Booking[];
@@ -69,8 +76,8 @@ const bookingService: BookingStorage = {
     const updatedBookings = [...bookings, booking];
     localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(updatedBookings));
     
-    // Отправляем событие синхронизации
-    window.dispatchEvent(new CustomEvent('bookings-updated'));
+    // Отправляем событие синхронизации с задержкой
+    dispatchEventWithDelay('bookings-updated');
   },
 
   // Обновить существующее бронирование
@@ -102,8 +109,8 @@ const bookingService: BookingStorage = {
     bookings[index] = updatedBooking;
     localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(bookings));
     
-    // Отправляем событие синхронизации
-    window.dispatchEvent(new CustomEvent('bookings-updated'));
+    // Отправляем событие синхронизации с задержкой
+    dispatchEventWithDelay('bookings-updated');
     return true;
   },
 
@@ -118,8 +125,8 @@ const bookingService: BookingStorage = {
     
     localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(filteredBookings));
     
-    // Отправляем событие синхронизации
-    window.dispatchEvent(new CustomEvent('bookings-updated'));
+    // Отправляем событие синхронизации с задержкой
+    dispatchEventWithDelay('bookings-updated');
     return true;
   },
 
@@ -204,8 +211,8 @@ const bookingService: BookingStorage = {
     const datesAsStrings = updatedDates.map(d => d.toISOString());
     localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(datesAsStrings));
     
-    // Отправляем событие синхронизации
-    window.dispatchEvent(new CustomEvent('blocked-dates-updated'));
+    // Отправляем событие синхронизации с задержкой
+    dispatchEventWithDelay('blocked-dates-updated');
   },
 
   // Удалить заблокированную дату
@@ -224,8 +231,8 @@ const bookingService: BookingStorage = {
     const datesAsStrings = filteredDates.map(d => d.toISOString());
     localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(datesAsStrings));
     
-    // Отправляем событие синхронизации
-    window.dispatchEvent(new CustomEvent('blocked-dates-updated'));
+    // Отправляем событие синхронизации с задержкой
+    dispatchEventWithDelay('blocked-dates-updated');
     return true;
   },
 

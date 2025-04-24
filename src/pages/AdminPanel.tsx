@@ -34,7 +34,6 @@ const AdminPanel: React.FC = () => {
     bookings, 
     blockedDates, 
     isLoading,
-    refreshData,
     addBooking,
     updateBooking,
     deleteBooking,
@@ -71,11 +70,9 @@ const AdminPanel: React.FC = () => {
     const isAuthenticated = localStorage.getItem('adminAuthenticated') === 'true';
     if (!isAuthenticated) {
       navigate('/admin');
-    } else {
-      // Загружаем данные при входе на страницу
-      refreshData();
     }
-  }, [navigate, refreshData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Открытие диалога редактирования брони
   const handleOpenEditDialog = (booking: Booking) => {
