@@ -25,8 +25,17 @@ const Index = () => {
           </Link>
         </div>
         
+        {/* Логотип компании */}
+        <div className="mx-auto w-48 mb-6">
+          <img 
+            src="https://cdn.poehali.dev/files/b4cf6771-45d7-4b94-b475-2e1ac5f8f74b.jpg" 
+            alt="CHECKOUT - логотип компании" 
+            className="w-full h-auto" 
+          />
+        </div>
+        
         {/* Название сайта с мигающими буквами */}
-        <div className="py-10">
+        <div className="py-6">
           <FlickeringTitle />
         </div>
         
@@ -53,19 +62,19 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto my-16">
           <QuestCard 
             title="Опасная зона" 
-            image="/danger-zone.jpg" 
+            image="https://cdn.poehali.dev/files/22b5cbc3-91fa-4cf7-8e54-09b4fa935b0d.jpg" 
             alt="Противогаз" 
             link="/danger-zone" 
           />
           <QuestCard 
             title="В поисках артефакта" 
-            image="/artifact-quest.jpg" 
+            image="https://cdn.poehali.dev/files/e9a50ad7-a24b-4e60-a46b-8a850f1e4d69.jpg" 
             alt="Золотая монета" 
             link="/artifact-quest" 
           />
           <QuestCard 
             title="Чайная зона" 
-            image="/tea-zone.jpg" 
+            image="https://cdn.poehali.dev/files/7308453a-fcf0-4c6d-b15c-2f16fd421022.jpg" 
             alt="Чай и еда" 
             link="/tea-zone" 
           />

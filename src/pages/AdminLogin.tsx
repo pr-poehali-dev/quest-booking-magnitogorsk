@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import WarningTape from "@/components/WarningTape";
+import { ArrowLeft, UserCog } from "lucide-react";
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -50,9 +51,34 @@ const AdminLogin: React.FC = () => {
       <div className="container mx-auto relative z-10 px-4 py-8">
         <WarningTape />
         
-        <div className="flex items-center justify-center min-h-[80vh]">
+        {/* Кнопка возврата на главную */}
+        <div className="absolute top-4 left-4 z-20">
+          <Link to="/">
+            <Button 
+              variant="outline" 
+              className="bg-black bg-opacity-80 border-2 border-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-300"
+            >
+              <ArrowLeft className="mr-2" />
+              <span className="font-bold">Вернуться на главную</span>
+            </Button>
+          </Link>
+        </div>
+        
+        {/* Логотип компании */}
+        <div className="mt-16 mb-6 flex justify-center">
+          <img 
+            src="https://cdn.poehali.dev/files/b4cf6771-45d7-4b94-b475-2e1ac5f8f74b.jpg" 
+            alt="CHECKOUT - логотип компании" 
+            className="w-40 h-auto" 
+          />
+        </div>
+        
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="bg-black/80 p-8 rounded-lg border-2 border-yellow-400 text-orange-500 w-full max-w-md">
-            <h1 className="text-3xl font-bold mb-6 text-yellow-400 text-center">Вход для администраторов</h1>
+            <div className="flex items-center justify-center mb-6">
+              <UserCog size={32} className="text-yellow-400 mr-2" />
+              <h1 className="text-3xl font-bold text-yellow-400 text-center">Вход для администраторов</h1>
+            </div>
             
             <div className="space-y-4">
               <div className="space-y-2">
