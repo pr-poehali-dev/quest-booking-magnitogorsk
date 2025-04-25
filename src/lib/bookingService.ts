@@ -26,8 +26,13 @@ export const getBookings = (): Booking[] => {
 
 // Добавление нового бронирования
 export const addBooking = (booking: Booking): void => {
-  bookings.push(booking);
-  dispatchEventWithDelay('bookings-updated');
+  // Убедимся, что время действительно доступно
+  if (isTimeSlotAvailable(booking.date, booking.time, booking.questId)) {
+    bookings.push(booking);
+    dispatchEventWithDelay('bookings-updated');
+  } else {
+    console.error('Attempt to book already reserved time slot');
+  }
 };
 
 // Обновление существующего бронирования
@@ -69,7 +74,10 @@ export const isTimeSlotAvailable = (date: string, time: string, questId: string)
     booking.questId === questId
   );
   
-  return !isBooked;
+  // Проверяем, не забронировано ли время на другом квесте
+  const isBookedOnOtherQuest = isTimeBookedOnAnyQuest(date, time);
+  
+  return !isBooked && !isBookedOnOtherQuest;
 };
 
 // Проверка, забронировано ли время на любом квесте
