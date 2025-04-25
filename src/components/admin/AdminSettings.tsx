@@ -1,153 +1,72 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
-
-interface AdminUser {
-  id: string;
-  username: string;
-  password: string;
-  name: string;
-  role: 'admin' | 'superadmin';
-  supportPhone: string;
-}
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import bookingService from "@/lib/bookingService";
 
 interface AdminSettingsProps {
-  currentUser: AdminUser;
-  onSaveSettings: (user: AdminUser) => void;
+  onPhoneUpdated?: () => void;
 }
 
-const AdminSettings: React.FC<AdminSettingsProps> = ({ currentUser, onSaveSettings }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [editedUser, setEditedUser] = useState<AdminUser>({ ...currentUser });
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+const AdminSettings: React.FC<AdminSettingsProps> = ({ onPhoneUpdated }) => {
+  const [supportPhone, setSupportPhone] = useState(bookingService.getSupportPhone());
+  const [showSavedMessage, setShowSavedMessage] = useState(false);
 
-  const handleOpenSettings = () => {
-    setEditedUser({ ...currentUser });
-    setConfirmPassword('');
-    setPasswordError('');
-    setIsOpen(true);
-  };
+  // Слушаем событие обновления настроек
+  useEffect(() => {
+    const handleSettingsUpdated = () => {
+      setSupportPhone(bookingService.getSupportPhone());
+      if (onPhoneUpdated) onPhoneUpdated();
+    };
 
-  const handleSaveSettings = () => {
-    // Проверка пароля
-    if (editedUser.password && editedUser.password !== confirmPassword) {
-      setPasswordError('Пароли не совпадают');
-      return;
-    }
+    window.addEventListener('settings-updated', handleSettingsUpdated);
+    return () => {
+      window.removeEventListener('settings-updated', handleSettingsUpdated);
+    };
+  }, [onPhoneUpdated]);
 
-    // Сохранение изменений
-    onSaveSettings(editedUser);
-    setIsOpen(false);
-    
-    toast({
-      title: 'Настройки сохранены',
-      description: 'Ваши настройки успешно обновлены',
-      variant: 'default',
-    });
+  const handleSavePhone = () => {
+    bookingService.setSupportPhone(supportPhone);
+    setShowSavedMessage(true);
+    setTimeout(() => setShowSavedMessage(false), 3000);
   };
 
   return (
-    <>
-      <Button 
-        onClick={handleOpenSettings}
-        variant="outline" 
-        className="text-yellow-400 border-yellow-400 hover:bg-yellow-950 hover:text-yellow-300"
-      >
-        Настройки
-      </Button>
-
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-black border-2 border-yellow-400 text-yellow-400">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Настройки администратора</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Имя</Label>
-              <Input 
-                id="name"
-                value={editedUser.name}
-                onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-                className="bg-black/50 border-yellow-400 text-orange-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Логин</Label>
-              <Input 
-                id="username"
-                value={editedUser.username}
-                onChange={(e) => setEditedUser({ ...editedUser, username: e.target.value })}
-                className="bg-black/50 border-yellow-400 text-orange-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Новый пароль</Label>
-              <Input 
-                id="password"
-                type="password"
-                value={editedUser.password}
-                onChange={(e) => setEditedUser({ ...editedUser, password: e.target.value })}
-                className="bg-black/50 border-yellow-400 text-orange-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Подтверждение пароля</Label>
-              <Input 
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="bg-black/50 border-yellow-400 text-orange-400"
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm">{passwordError}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="supportPhone">Телефон поддержки</Label>
-              <Input 
-                id="supportPhone"
-                value={editedUser.supportPhone || "+7 (999) 123-45-67"}
-                onChange={(e) => setEditedUser({ ...editedUser, supportPhone: e.target.value })}
-                className="bg-black/50 border-yellow-400 text-orange-400"
-                placeholder="+7 (999) 123-45-67"
-              />
-              <p className="text-xs text-yellow-300">Этот номер будет отображаться на сайте для клиентов</p>
-            </div>
-
-            <div className="pt-4">
-              <p className="text-sm text-orange-400">
-                Роль: {editedUser.role === 'superadmin' ? 'Супер администратор' : 'Администратор'}
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              onClick={handleSaveSettings}
-              className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold"
+    <Card className="bg-black/30 border-yellow-900/50">
+      <CardHeader>
+        <CardTitle className="text-yellow-400">Настройки администратора</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="supportPhone" className="text-orange-400">
+            Телефон поддержки
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id="supportPhone"
+              value={supportPhone}
+              onChange={(e) => setSupportPhone(e.target.value)}
+              placeholder="+7 (999) 123-45-67"
+              className="bg-black/40 border-yellow-900/30 text-orange-500"
+            />
+            <Button 
+              onClick={handleSavePhone}
+              className="bg-yellow-600 hover:bg-yellow-700 text-black"
             >
               Сохранить
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          </div>
+          {showSavedMessage && (
+            <p className="text-green-500 text-sm mt-1">Телефон сохранен!</p>
+          )}
+          <p className="text-sm text-orange-300 mt-2">
+            Номер телефона будет отображаться для пользователей в разделах квестов
+            и при оформлении бронирования.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

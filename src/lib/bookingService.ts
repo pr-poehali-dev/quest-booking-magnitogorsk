@@ -31,6 +31,7 @@ interface BookingStorage {
   removeBlockedDate: (date: Date) => boolean;
   getSupportPhone: () => string;
   setSupportPhone: (phone: string) => void;
+  isTimeBookedOnAnyQuest: (date: Date, time: string) => boolean;
 }
 
 // Singleton-сервис для работы с бронированиями
@@ -147,6 +148,17 @@ const bookingService: BookingStorage = {
     return bookingDate.getTime() > (now.getTime() + minimumTimeBeforeBooking);
   },
 
+  // Проверка, забронировано ли время на любом квесте
+  isTimeBookedOnAnyQuest: (date: Date, time: string): boolean => {
+    const bookings = bookingService.getBookings();
+    const dateString = date.toDateString();
+    
+    return bookings.some(booking => 
+      booking.date.toDateString() === dateString && 
+      booking.time === time
+    );
+  },
+
   // Проверить доступность временного слота
   isTimeSlotAvailable: (date: Date, time: string, questType: string): boolean => {
     const bookings = bookingService.getBookings();
@@ -163,12 +175,12 @@ const bookingService: BookingStorage = {
       return false;
     }
     
-    // Проверка на существующие бронирования
-    return !bookings.some(booking => 
-      booking.date.toDateString() === dateString && 
-      booking.time === time &&
-      booking.questType === questType
-    );
+    // Проверка на существующие бронирования любого квеста
+    if (bookingService.isTimeBookedOnAnyQuest(date, time)) {
+      return false;
+    }
+    
+    return true;
   },
 
   // Получить бронирования для конкретной даты и квеста
@@ -252,6 +264,8 @@ const bookingService: BookingStorage = {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') as Settings;
       settings.supportPhone = phone;
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      // Отправляем событие обновления настроек
+      dispatchEventWithDelay('settings-updated');
     } catch (error) {
       console.error("Ошибка при сохранении настроек:", error);
     }

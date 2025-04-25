@@ -26,6 +26,23 @@ const BookingTable: React.FC<BookingTableProps> = ({
     return <p className="text-orange-400">Нет броней на выбранную дату</p>;
   }
 
+  // Функция для форматирования телефона
+  const formatPhone = (phone: string) => {
+    // Если телефон уже отформатирован, возвращаем как есть
+    if (phone.includes("(") || phone.includes("-")) return phone;
+    
+    // Удаляем все нецифровые символы
+    const cleaned = phone.replace(/\D/g, "");
+    
+    // Проверяем длину и форматируем
+    if (cleaned.length === 11) {
+      return `+${cleaned[0]} (${cleaned.substring(1, 4)}) ${cleaned.substring(4, 7)}-${cleaned.substring(7, 9)}-${cleaned.substring(9, 11)}`;
+    }
+    
+    // Возвращаем исходный номер, если не удалось отформатировать
+    return phone;
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-orange-400">
@@ -51,7 +68,11 @@ const BookingTable: React.FC<BookingTableProps> = ({
               </td>
               <td className="py-2 px-3">{booking.time}</td>
               <td className="py-2 px-3">{booking.name}</td>
-              <td className="py-2 px-3">{booking.phone}</td>
+              <td className="py-2 px-3">
+                <a href={`tel:${booking.phone}`} className="underline hover:text-yellow-400">
+                  {formatPhone(booking.phone)}
+                </a>
+              </td>
               <td className="py-2 px-3">{booking.peopleCount || '—'}</td>
               <td className="py-2 px-3">{booking.age || '—'}</td>
               <td className="py-2 px-3">

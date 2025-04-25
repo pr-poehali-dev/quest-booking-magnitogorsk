@@ -37,6 +37,14 @@ const TimeSlotButton: React.FC<TimeSlotButtonProps> = ({
       b.questType === questType
   );
 
+  // Проверить, занято ли время на других квестах
+  const isTimeBookedOnOtherQuest = bookings.some(
+    (b) =>
+      b.date.toDateString() === selectedDate.toDateString() &&
+      b.time === time &&
+      b.questType !== questType
+  );
+
   // Определение состояния кнопки
   let buttonVariant: "default" | "outline" | "destructive" | "ghost" | "link" | "secondary" | null | undefined;
   let buttonText: string;
@@ -58,6 +66,10 @@ const TimeSlotButton: React.FC<TimeSlotButtonProps> = ({
       buttonVariant = "secondary"; // Желтая кнопка для ожидающих броней
       buttonText = `${booking.name} ⌛`;
     }
+  } else if (isTimeBookedOnOtherQuest) {
+    buttonVariant = "ghost";
+    buttonText = "Занято на другом квесте";
+    buttonDisabled = true;
   } else {
     buttonVariant = "outline";
     buttonText = "Свободно";
@@ -71,7 +83,9 @@ const TimeSlotButton: React.FC<TimeSlotButtonProps> = ({
           ? booking.status === "confirmed"
             ? "bg-green-700 hover:bg-green-800 text-white"
             : "bg-yellow-600 hover:bg-yellow-700 text-black"
-          : "text-gray-100 hover:bg-yellow-900/20"
+          : isTimeBookedOnOtherQuest
+            ? "bg-gray-700 hover:bg-gray-800 text-gray-300"
+            : "text-gray-100 hover:bg-yellow-900/20"
       }`}
       disabled={buttonDisabled}
       onClick={() => {
