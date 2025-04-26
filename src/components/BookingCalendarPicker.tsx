@@ -10,7 +10,6 @@ import { ru } from 'date-fns/locale';
 import { format } from 'date-fns';
 import { Booking } from '@/types/booking';
 import bookingService from '@/lib/bookingService';
-import { v4 as uuidv4 } from 'uuid';
 
 interface BookingCalendarPickerProps {
   questId: string;
@@ -79,7 +78,7 @@ const BookingCalendarPicker: React.FC<BookingCalendarPickerProps> = ({
 
     // Создаем объект бронирования
     const booking: Booking = {
-      id: uuidv4(),
+      id: Math.random().toString(36).substring(2, 11), // Простая замена uuid
       questId,
       questType,
       date: format(selectedDate, 'yyyy-MM-dd'),
