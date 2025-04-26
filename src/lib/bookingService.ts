@@ -3,6 +3,7 @@ import { Booking } from '@/types/booking';
 // Имитация хранилища данных
 let bookings: Booking[] = [];
 let blockedDates: { date: string, reason: string }[] = [];
+let supportPhone: string = "+7 (999) 123-45-67"; // Добавляем телефон поддержки
 
 // Генерация диапазона времени для квестов
 export const generateTimeSlots = (): string[] => {
@@ -119,13 +120,6 @@ export const getBlockedDates = (): { date: string, reason: string }[] => {
   return [...blockedDates];
 };
 
-// Отправка события с задержкой для предотвращения циклов обновления
-const dispatchEventWithDelay = (eventName: string, delay = 100): void => {
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent(eventName));
-  }, delay);
-};
-
 // Форматировать телефонный номер для отображения
 export const formatPhoneNumber = (phone: string): string => {
   // Удаляем все нецифровые символы
@@ -138,6 +132,24 @@ export const formatPhoneNumber = (phone: string): string => {
   
   // Форматируем номер как +7 (XXX) XXX-XX-XX
   return `+${cleaned[0]} (${cleaned.substring(1, 4)}) ${cleaned.substring(4, 7)}-${cleaned.substring(7, 9)}-${cleaned.substring(9, 11)}`;
+};
+
+// Получить телефон поддержки
+export const getSupportPhone = (): string => {
+  return supportPhone;
+};
+
+// Установить телефон поддержки
+export const setSupportPhone = (phone: string): void => {
+  supportPhone = phone;
+  dispatchEventWithDelay('settings-updated');
+};
+
+// Отправка события с задержкой для предотвращения циклов обновления
+const dispatchEventWithDelay = (eventName: string, delay = 100): void => {
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent(eventName));
+  }, delay);
 };
 
 export default {
@@ -155,5 +167,7 @@ export default {
   unblockDate,
   getBlockedDates,
   isTimeBookedOnAnyQuest,
-  formatPhoneNumber
+  formatPhoneNumber,
+  getSupportPhone,  // Добавляем в экспорт по умолчанию
+  setSupportPhone   // Добавляем в экспорт по умолчанию
 };
