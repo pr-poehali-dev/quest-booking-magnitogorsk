@@ -1,46 +1,37 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
 import WarningTape from "@/components/WarningTape";
 import BookingCalendarPicker from "@/components/BookingCalendarPicker";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/use-toast";
 import bookingService from "@/lib/bookingService";
 
-const DangerZoneQuest = () => {
+const DangerZoneQuest: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  
+  const [peopleCount, setPeopleCount] = useState("");
+
   // Заглушка для блокированных дат (в реальном приложении должны загружаться с сервера)
   const blockedDates = [
+    new Date(new Date().getFullYear(), new Date().getMonth(), 5),
     new Date(new Date().getFullYear(), new Date().getMonth(), 15),
-    new Date(new Date().getFullYear(), new Date().getMonth(), 20),
     new Date(new Date().getFullYear(), new Date().getMonth(), 25)
   ];
-  
-  // Пример временных слотов
-  const timeSlots = [
-    { time: "12:00", available: true },
-    { time: "13:30", available: true },
-    { time: "15:00", available: true },
-    { time: "16:30", available: true },
-    { time: "18:00", available: true },
-    { time: "19:30", available: true },
-    { time: "21:00", available: true },
-    { time: "22:30", available: true },
-  ];
 
-  const handleBookTime = (time: string) => {
+  const times = ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30", "21:00", "22:30"];
+  
+  const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    setIsBookingOpen(true);
+    setBookingDialogOpen(true);
   };
 
-  const handleSubmitBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleBooking = () => {
     if (!name || !phone) {
       toast({
         title: "Ошибка",
@@ -60,177 +51,186 @@ const DangerZoneQuest = () => {
         time: selectedTime,
         name,
         phone,
-        peopleCount: 4,
+        peopleCount: peopleCount ? parseInt(peopleCount) : 4,
         status: 'pending'
       };
       
-      bookingService.addBooking(booking);
+      const success = bookingService.addBooking(booking);
       
-      toast({
-        title: "Бронь в резерве",
-        description: "Скоро с вами свяжется оператор для уточнения",
-      });
+      if (success) {
+        toast({
+          title: "Бронь в резерве",
+          description: "Скоро с вами свяжется оператор для уточнения",
+        });
+        setBookingDialogOpen(false);
+        setName("");
+        setPhone("");
+        setPeopleCount("");
+        setSelectedTime(null);
+      } else {
+        toast({
+          title: "Ошибка бронирования",
+          description: "Это время уже занято. Пожалуйста, выберите другое время.",
+          variant: "destructive"
+        });
+      }
     }
-    
-    setIsBookingOpen(false);
-    setName("");
-    setPhone("");
   };
 
-  // Определяем цену в зависимости от времени
   const getPrice = (time: string) => {
     const hour = parseInt(time.split(":")[0]);
-    return hour >= 21 ? "1000" : "900";
+    return hour >= 21 ? 1200 : 1000;
   };
 
-  // Проверяем доступность времени
-  const isTimeAvailable = (time: string) => {
-    if (!selectedDate) return false;
+  const isTimeDisabled = (time: string) => {
+    if (!selectedDate) return true;
     
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    return bookingService.isTimeSlotAvailable(dateStr, time, "danger");
+    return !bookingService.isTimeSlotAvailable(dateStr, time, "danger");
   };
 
   return (
-    <div className="brick-wall-bg min-h-screen toxic-waste-bg relative">
-      <div className="green-smoke"></div>
+    <div className="min-h-screen bg-[#1a1a2e] relative overflow-hidden">
+      {/* Декоративные элементы */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542281286-9e0a16bb7366')] bg-cover bg-center opacity-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50"></div>
       
-      {/* Верхняя черно-желтая лента */}
-      <WarningTape />
+      {/* Биологические предупреждающие знаки */}
+      <div className="absolute top-1/4 right-1/4 w-24 h-24 border-4 border-yellow-500 rounded-full opacity-30"></div>
+      <div className="absolute top-1/3 left-1/4 w-36 h-36 border-4 border-yellow-500 rounded-full opacity-30"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-20 h-20 border-4 border-yellow-500 rounded-full opacity-30"></div>
       
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <Link to="/" className="inline-block mb-6">
-          <Button variant="outline" className="text-yellow-DEFAULT border-yellow-DEFAULT bg-black">
-            ← Вернуться на главную
+      <div className="container mx-auto relative z-10 px-4 py-8">
+        <WarningTape />
+        
+        <Link to="/" className="inline-block mb-8">
+          <Button variant="outline" className="text-yellow-500 border-yellow-500 hover:bg-yellow-950 hover:text-yellow-400">
+            На главную
           </Button>
         </Link>
-        
-        {/* Изображение противогаза в качестве баннера */}
+
+        {/* Изображение опасного квеста в качестве баннера */}
         <div className="mb-8 flex justify-center">
-          <div className="relative w-full max-w-xl overflow-hidden rounded-lg caution-border">
+          <div className="relative w-full max-w-xl overflow-hidden rounded-lg border-2 border-yellow-500">
             <img 
               src="https://cdn.poehali.dev/files/b4cf6771-45d7-4b94-b475-2e1ac5f8f74b.jpg" 
-              alt="Противогаз - Квест Опасная зона" 
+              alt="Опасная зона - экстремальный квест" 
               className="w-full h-[300px] object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-            <h1 className="absolute bottom-4 left-0 w-full text-4xl font-bold text-yellow-DEFAULT text-center mb-4 flashing-light">
-              ХОРРОР КВЕСТ!
+            <h1 className="absolute bottom-4 left-0 w-full text-3xl md:text-5xl font-bold text-yellow-500 text-center">
+              ОПАСНАЯ ЗОНА!
             </h1>
           </div>
         </div>
         
-        <div className="caution-border p-8 bg-black bg-opacity-80 max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-orange-DEFAULT mb-2">Сюжет:</h2>
-            <p className="text-orange-DEFAULT">
-              Вы группа сталкеров, чьи жизни погрязли в долгах, и вот лучик света – проходит молва, 
-              что за дневник одного из ученого, готовы заплатить огромные деньги. 
-              Вы не раздумываете и бросаетесь на поиски этого дневника, прямо в логово опасности.
-            </p>
+        <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-500 text-yellow-300 mb-8">
+          <p className="text-lg mb-6">
+            <strong>Сюжет:</strong> Вы группа исследователей, которые оказались в зоне биологической угрозы. 
+            Опасный вирус распространяется по комплексу, и вы должны найти противоядие и выбраться до того, 
+            как система безопасности заблокирует все выходы. На поиски у вас есть всего 60 минут!
+          </p>
+          <div className="mb-6">
+            <p className="text-lg"><strong>Возраст:</strong> 16+, квест не рекомендуется для лиц с сердечно-сосудистыми заболеваниями и боязнью замкнутых пространств.</p>
+            <p className="text-lg"><strong>Команда:</strong> от 2 до 6 человек.</p>
+            <p className="text-lg"><strong>Цена за 1 человека</strong> указана под временем бронирования.</p>
           </div>
-          
-          <div className="flex flex-col md:flex-row gap-6 mb-8">
-            <div className="flex-1">
-              <div className="p-4 border border-yellow-DEFAULT rounded-md bg-black bg-opacity-70">
-                <h3 className="text-xl font-bold text-orange-DEFAULT mb-2">Информация о квесте:</h3>
-                <ul className="text-orange-DEFAULT space-y-2">
-                  <li>👥 Команда от 4–10 человек</li>
-                  <li>👨‍👩‍👧‍👦 Возраст: 18+, 14+, 13+ в сопровождение</li>
-                  <li>💰 Цена за 1 человека, указана под временем бронирования</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              {/* Календарь с выбором даты */}
-              <BookingCalendarPicker
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                blockedDates={blockedDates}
-              />
-            </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-500">
+            {/* Календарь с выбором даты */}
+            <BookingCalendarPicker
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              blockedDates={blockedDates}
+            />
           </div>
           
           {selectedDate && (
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-orange-DEFAULT mb-4">Выберите время:</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {timeSlots.map((slot) => {
-                  const available = isTimeAvailable(slot.time);
+            <div className="bg-black/80 p-6 rounded-lg border-2 border-yellow-500">
+              <h2 className="text-2xl font-bold mb-4 text-yellow-500">Выберите время</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {times.map((time) => {
+                  const disabled = isTimeDisabled(time);
+                  const price = getPrice(time);
                   
                   return (
-                    <div key={slot.time} className="text-center">
-                      <button
-                        disabled={!available}
-                        onClick={() => available && handleBookTime(slot.time)}
-                        className={`w-full p-3 border-2 ${
-                          available 
-                            ? "border-yellow-DEFAULT text-yellow-DEFAULT hover:bg-yellow-DEFAULT hover:text-black" 
-                            : "border-red-500 text-red-500 line-through opacity-50"
-                        } bg-black rounded-md transition-colors`}
+                    <div key={time} className="text-center">
+                      <Button
+                        onClick={() => !disabled && handleTimeSelect(time)}
+                        variant="outline"
+                        disabled={disabled}
+                        className={`w-full h-16 text-lg font-bold mb-2 border-2 ${
+                          disabled 
+                            ? 'line-through text-red-500 border-red-500' 
+                            : 'text-yellow-500 border-yellow-500 hover:bg-yellow-950 hover:text-yellow-400'
+                        }`}
                       >
-                        {slot.time}
-                      </button>
-                      <p className="mt-1 text-orange-DEFAULT">
-                        {available ? `${getPrice(slot.time)}₽` : "Недоступно"}
-                      </p>
+                        {time}
+                      </Button>
+                      <p className="text-yellow-300 font-bold">{price} ₽/чел</p>
                     </div>
-                  )}
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
       </div>
       
-      {/* Диалог бронирования */}
-      <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-        <DialogContent className="bg-black border-yellow-DEFAULT text-orange-DEFAULT">
+      <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
+        <DialogContent className="bg-black border-2 border-yellow-500 text-yellow-500">
           <DialogHeader>
-            <DialogTitle className="text-yellow-DEFAULT">Бронирование</DialogTitle>
-            <DialogDescription className="text-orange-DEFAULT">
-              Выбранное время: {selectedTime}
-            </DialogDescription>
+            <DialogTitle className="text-2xl font-bold">Бронирование квеста</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmitBooking} className="space-y-4">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-yellow-DEFAULT">Ваше имя</label>
-              <input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 bg-gray-800 border border-yellow-DEFAULT text-orange-DEFAULT rounded"
-                required
+              <Label htmlFor="name" className="text-yellow-500">Ваше имя</Label>
+              <Input 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="bg-black/50 border-yellow-500 text-yellow-300"
               />
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="phone" className="text-yellow-DEFAULT">Номер телефона</label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full p-2 bg-gray-800 border border-yellow-DEFAULT text-orange-DEFAULT rounded"
-                required
+              <Label htmlFor="phone" className="text-yellow-500">Номер телефона</Label>
+              <Input 
+                id="phone" 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)} 
+                className="bg-black/50 border-yellow-500 text-yellow-300"
               />
             </div>
             
-            <div className="pt-4">
-              <Button 
-                type="submit" 
-                className="w-full bg-yellow-DEFAULT text-black hover:bg-orange-DEFAULT"
-              >
-                Забронировать
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="peopleCount" className="text-yellow-500">Количество человек</Label>
+              <Input 
+                id="peopleCount" 
+                value={peopleCount} 
+                onChange={(e) => setPeopleCount(e.target.value)} 
+                type="number"
+                min="2"
+                max="6"
+                className="bg-black/50 border-yellow-500 text-yellow-300"
+              />
             </div>
-          </form>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={handleBooking} 
+              className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold"
+            >
+              Забронировать
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* Нижняя черно-желтая лента */}
       <WarningTape />
     </div>
   );

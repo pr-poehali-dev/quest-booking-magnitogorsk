@@ -1,19 +1,6 @@
 // Сервис для работы с бронированиями квестов
 
-// Типы данных
-export interface Booking {
-  id: string;
-  questId: string;
-  questType: "danger" | "artifact";
-  date: string;
-  time: string;
-  name: string;
-  phone: string;
-  peopleCount?: number;
-  notes?: string;
-  teaZone?: boolean;
-  status: "pending" | "confirmed" | "cancelled";
-}
+import { Booking } from "@/types/booking";
 
 interface BlockedDate {
   date: string;
@@ -28,12 +15,28 @@ const SUPPORT_PHONE_KEY = "quest_support_phone";
 // Получаем данные из localStorage или возвращаем начальные значения
 const getStoredBookings = (): Booking[] => {
   const stored = localStorage.getItem(BOOKINGS_KEY);
-  return stored ? JSON.parse(stored) : [];
+  if (!stored) return [];
+  
+  try {
+    const bookings = JSON.parse(stored);
+    return Array.isArray(bookings) ? bookings : [];
+  } catch (error) {
+    console.error("Error parsing bookings from localStorage:", error);
+    return [];
+  }
 };
 
 const getStoredBlockedDates = (): BlockedDate[] => {
   const stored = localStorage.getItem(BLOCKED_DATES_KEY);
-  return stored ? JSON.parse(stored) : [];
+  if (!stored) return [];
+  
+  try {
+    const blockedDates = JSON.parse(stored);
+    return Array.isArray(blockedDates) ? blockedDates : [];
+  } catch (error) {
+    console.error("Error parsing blocked dates from localStorage:", error);
+    return [];
+  }
 };
 
 // Начальное значение телефона поддержки
@@ -41,11 +44,23 @@ let supportPhone = "+7 (999) 123-45-67";
 
 // Сохраняем данные в localStorage
 const saveBookings = (bookings: Booking[]) => {
-  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+  try {
+    localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+    return true;
+  } catch (error) {
+    console.error("Error saving bookings to localStorage:", error);
+    return false;
+  }
 };
 
 const saveBlockedDates = (blockedDates: BlockedDate[]) => {
-  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(blockedDates));
+  try {
+    localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(blockedDates));
+    return true;
+  } catch (error) {
+    console.error("Error saving blocked dates to localStorage:", error);
+    return false;
+  }
 };
 
 // Генерация временных слотов
@@ -93,6 +108,7 @@ const addBooking = (booking: Booking): boolean => {
     return false;
   }
   
+  // Добавляем новое бронирование
   bookings.push(booking);
   saveBookings(bookings);
   return true;
@@ -119,6 +135,29 @@ const updateBookingStatus = (bookingId: string, status: "pending" | "confirmed" 
   }
   
   bookings[index].status = status;
+  saveBookings(bookings);
+  return true;
+};
+
+// Обновление бронирования
+const updateBooking = (bookingId: string, updatedBooking: Booking): boolean => {
+  const bookings = getStoredBookings();
+  const index = bookings.findIndex(booking => booking.id === bookingId);
+  
+  if (index === -1) {
+    return false;
+  }
+  
+  // Проверка на доступность нового времени, если оно изменилось
+  const oldBooking = bookings[index];
+  if (
+    (oldBooking.date !== updatedBooking.date || oldBooking.time !== updatedBooking.time) &&
+    !isTimeSlotAvailable(updatedBooking.date, updatedBooking.time, updatedBooking.questId)
+  ) {
+    return false;
+  }
+  
+  bookings[index] = updatedBooking;
   saveBookings(bookings);
   return true;
 };
@@ -188,6 +227,7 @@ const bookingService = {
   getBookings,
   getBookingsForQuest,
   updateBookingStatus,
+  updateBooking,
   deleteBooking,
   blockDate,
   unblockDate,

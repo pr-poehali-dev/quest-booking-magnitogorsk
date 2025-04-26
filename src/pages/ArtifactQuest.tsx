@@ -15,6 +15,7 @@ const ArtifactQuest: React.FC = () => {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [peopleCount, setPeopleCount] = useState("");
 
   // Заглушка для блокированных дат (в реальном приложении должны загружаться с сервера)
   const blockedDates = [
@@ -50,21 +51,30 @@ const ArtifactQuest: React.FC = () => {
         time: selectedTime,
         name,
         phone,
-        peopleCount: 4,
+        peopleCount: peopleCount ? parseInt(peopleCount) : 4,
         status: 'pending'
       };
       
-      bookingService.addBooking(booking);
+      const success = bookingService.addBooking(booking);
       
-      toast({
-        title: "Бронь в резерве",
-        description: "Скоро с вами свяжется оператор для уточнения",
-      });
+      if (success) {
+        toast({
+          title: "Бронь в резерве",
+          description: "Скоро с вами свяжется оператор для уточнения",
+        });
+        setBookingDialogOpen(false);
+        setName("");
+        setPhone("");
+        setPeopleCount("");
+        setSelectedTime(null);
+      } else {
+        toast({
+          title: "Ошибка бронирования",
+          description: "Это время уже занято. Пожалуйста, выберите другое время.",
+          variant: "destructive"
+        });
+      }
     }
-    
-    setBookingDialogOpen(false);
-    setName("");
-    setPhone("");
   };
 
   const getPrice = (time: string) => {
@@ -110,7 +120,7 @@ const ArtifactQuest: React.FC = () => {
         <div className="mb-8 flex justify-center">
           <div className="relative w-full max-w-xl overflow-hidden rounded-lg border-2 border-yellow-400">
             <img 
-              src="https://cdn.poehali.dev/files/e9a50ad7-a24b-4e60-a46b-8a850f1e4d69.jpg" 
+              src="https://cdn.poehali.dev/files/b4cf6771-45d7-4b94-b475-2e1ac5f8f74b.jpg" 
               alt="Детективный квест - В поисках артефакта" 
               className="w-full h-[300px] object-cover"
             />
@@ -200,6 +210,19 @@ const ArtifactQuest: React.FC = () => {
                 id="phone" 
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)} 
+                className="bg-black/50 border-yellow-400 text-orange-400"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="peopleCount" className="text-yellow-400">Количество человек</Label>
+              <Input 
+                id="peopleCount" 
+                value={peopleCount} 
+                onChange={(e) => setPeopleCount(e.target.value)} 
+                type="number"
+                min="4"
+                max="10"
                 className="bg-black/50 border-yellow-400 text-orange-400"
               />
             </div>

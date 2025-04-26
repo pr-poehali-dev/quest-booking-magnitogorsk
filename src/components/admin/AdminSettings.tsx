@@ -1,72 +1,115 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import bookingService from "@/lib/bookingService";
 
-interface AdminSettingsProps {
-  onPhoneUpdated?: () => void;
+interface AdminUser {
+  id: string;
+  username: string;
+  password: string;
+  name: string;
+  role: 'admin' | 'superadmin';
+  supportPhone: string;
 }
 
-const AdminSettings: React.FC<AdminSettingsProps> = ({ onPhoneUpdated }) => {
-  const [supportPhone, setSupportPhone] = useState(bookingService.getSupportPhone());
-  const [showSavedMessage, setShowSavedMessage] = useState(false);
+interface AdminSettingsProps {
+  currentUser: AdminUser;
+  onSaveSettings: (user: AdminUser) => void;
+}
 
-  // Слушаем событие обновления настроек
-  useEffect(() => {
-    const handleSettingsUpdated = () => {
-      setSupportPhone(bookingService.getSupportPhone());
-      if (onPhoneUpdated) onPhoneUpdated();
+const AdminSettings: React.FC<AdminSettingsProps> = ({ currentUser, onSaveSettings }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [username, setUsername] = useState(currentUser.username);
+  const [password, setPassword] = useState(currentUser.password);
+  const [name, setName] = useState(currentUser.name);
+  const [supportPhone, setSupportPhone] = useState(currentUser.supportPhone || bookingService.getSupportPhone());
+
+  const handleSave = () => {
+    const updatedUser = {
+      ...currentUser,
+      username,
+      password,
+      name,
+      supportPhone
     };
-
-    window.addEventListener('settings-updated', handleSettingsUpdated);
-    return () => {
-      window.removeEventListener('settings-updated', handleSettingsUpdated);
-    };
-  }, [onPhoneUpdated]);
-
-  const handleSavePhone = () => {
+    
+    onSaveSettings(updatedUser);
     bookingService.setSupportPhone(supportPhone);
-    setShowSavedMessage(true);
-    setTimeout(() => setShowSavedMessage(false), 3000);
+    setIsOpen(false);
   };
 
   return (
-    <Card className="bg-black/30 border-yellow-900/50">
-      <CardHeader>
-        <CardTitle className="text-yellow-400">Настройки администратора</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="supportPhone" className="text-orange-400">
-            Телефон поддержки
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="supportPhone"
-              value={supportPhone}
-              onChange={(e) => setSupportPhone(e.target.value)}
-              placeholder="+7 (999) 123-45-67"
-              className="bg-black/40 border-yellow-900/30 text-orange-500"
-            />
+    <>
+      <Button 
+        variant="outline" 
+        className="text-yellow-400 border-yellow-400 hover:bg-yellow-950 hover:text-yellow-300"
+        onClick={() => setIsOpen(true)}
+      >
+        Настройки
+      </Button>
+      
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="bg-black border-2 border-yellow-400 text-yellow-400">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Настройки администратора</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-yellow-400">Имя</Label>
+              <Input 
+                id="name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="bg-black/50 border-yellow-400 text-orange-400"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-yellow-400">Логин</Label>
+              <Input 
+                id="username" 
+                value={username} 
+                onChange={(e) => setUsername(e.target.value)} 
+                className="bg-black/50 border-yellow-400 text-orange-400"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-yellow-400">Пароль</Label>
+              <Input 
+                id="password" 
+                type="password"
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="bg-black/50 border-yellow-400 text-orange-400"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="supportPhone" className="text-yellow-400">Телефон поддержки</Label>
+              <Input 
+                id="supportPhone" 
+                value={supportPhone} 
+                onChange={(e) => setSupportPhone(e.target.value)} 
+                className="bg-black/50 border-yellow-400 text-orange-400"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
             <Button 
-              onClick={handleSavePhone}
-              className="bg-yellow-600 hover:bg-yellow-700 text-black"
+              onClick={handleSave} 
+              className="bg-yellow-600 hover:bg-yellow-700 text-black font-bold"
             >
               Сохранить
             </Button>
-          </div>
-          {showSavedMessage && (
-            <p className="text-green-500 text-sm mt-1">Телефон сохранен!</p>
-          )}
-          <p className="text-sm text-orange-300 mt-2">
-            Номер телефона будет отображаться для пользователей в разделах квестов
-            и при оформлении бронирования.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
