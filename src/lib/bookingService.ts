@@ -1,173 +1,199 @@
-import { Booking } from '@/types/booking';
+// Сервис для работы с бронированиями квестов
 
-// Имитация хранилища данных
-let bookings: Booking[] = [];
-let blockedDates: { date: string, reason: string }[] = [];
-let supportPhone: string = "+7 (999) 123-45-67"; // Добавляем телефон поддержки
+// Типы данных
+export interface Booking {
+  id: string;
+  questId: string;
+  questType: "danger" | "artifact";
+  date: string;
+  time: string;
+  name: string;
+  phone: string;
+  peopleCount?: number;
+  notes?: string;
+  teaZone?: boolean;
+  status: "pending" | "confirmed" | "cancelled";
+}
 
-// Генерация диапазона времени для квестов
-export const generateTimeSlots = (): string[] => {
-  const slots: string[] = [];
-  // Время начала и окончания работы
-  const startHour = 10;
-  const endHour = 23;
+interface BlockedDate {
+  date: string;
+  reason: string;
+}
+
+// Ключи для localStorage
+const BOOKINGS_KEY = "quest_bookings";
+const BLOCKED_DATES_KEY = "quest_blocked_dates";
+const SUPPORT_PHONE_KEY = "quest_support_phone";
+
+// Получаем данные из localStorage или возвращаем начальные значения
+const getStoredBookings = (): Booking[] => {
+  const stored = localStorage.getItem(BOOKINGS_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+const getStoredBlockedDates = (): BlockedDate[] => {
+  const stored = localStorage.getItem(BLOCKED_DATES_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+// Начальное значение телефона поддержки
+let supportPhone = "+7 (999) 123-45-67";
+
+// Сохраняем данные в localStorage
+const saveBookings = (bookings: Booking[]) => {
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+};
+
+const saveBlockedDates = (blockedDates: BlockedDate[]) => {
+  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(blockedDates));
+};
+
+// Генерация временных слотов
+const generateTimeSlots = (): string[] => {
+  return ["12:00", "13:30", "15:00", "16:30", "18:00", "19:30", "21:00", "22:30"];
+};
+
+// Проверка доступности временного слота
+const isTimeSlotAvailable = (date: string, time: string, questId: string): boolean => {
+  const bookings = getStoredBookings();
   
-  for (let hour = startHour; hour < endHour; hour++) {
-    slots.push(`${hour}:00`);
-    slots.push(`${hour}:30`);
+  // Проверяем, не занято ли время уже для этого квеста
+  const bookedForThisQuest = bookings.some(
+    booking => booking.date === date && booking.time === time && booking.questId === questId
+  );
+  
+  // Проверяем, не занято ли время для другого квеста
+  // (чтобы не было двух квестов в одно и то же время)
+  const bookedForOtherQuest = bookings.some(
+    booking => booking.date === date && booking.time === time && booking.questId !== questId
+  );
+  
+  // Проверяем, не заблокирована ли дата полностью
+  const isDateBlocked = isDateFullyBlocked(date);
+  
+  return !bookedForThisQuest && !bookedForOtherQuest && !isDateBlocked;
+};
+
+// Проверка, заблокирована ли дата
+const isDateBlocked = (date: string): boolean => {
+  const blockedDates = getStoredBlockedDates();
+  return blockedDates.some(blockedDate => blockedDate.date === date);
+};
+
+const isDateFullyBlocked = (date: string): boolean => {
+  return isDateBlocked(date);
+};
+
+// Добавление бронирования
+const addBooking = (booking: Booking): boolean => {
+  const bookings = getStoredBookings();
+  
+  // Проверяем доступность времени перед добавлением
+  if (!isTimeSlotAvailable(booking.date, booking.time, booking.questId)) {
+    return false;
   }
   
-  return slots;
+  bookings.push(booking);
+  saveBookings(bookings);
+  return true;
 };
 
-// Получение всех бронирований
-export const getBookings = (): Booking[] => {
-  return [...bookings];
+// Получение бронирований
+const getBookings = (): Booking[] => {
+  return getStoredBookings();
 };
 
-// Добавление нового бронирования
-export const addBooking = (booking: Booking): void => {
-  // Убедимся, что время действительно доступно
-  if (isTimeSlotAvailable(booking.date, booking.time, booking.questId)) {
-    bookings.push(booking);
-    dispatchEventWithDelay('bookings-updated');
-  } else {
-    console.error('Attempt to book already reserved time slot');
-  }
-};
-
-// Обновление существующего бронирования
-export const updateBooking = (id: string, updatedBooking: Partial<Booking>): void => {
-  const index = bookings.findIndex(booking => booking.id === id);
-  if (index !== -1) {
-    bookings[index] = { ...bookings[index], ...updatedBooking };
-    dispatchEventWithDelay('bookings-updated');
-  }
-};
-
-// Удаление бронирования
-export const deleteBooking = (id: string): void => {
-  bookings = bookings.filter(booking => booking.id !== id);
-  dispatchEventWithDelay('bookings-updated');
-};
-
-// Получение бронирований на конкретную дату
-export const getBookingsByDate = (date: string): Booking[] => {
-  return bookings.filter(booking => booking.date === date);
-};
-
-// Получение бронирований по квесту
-export const getBookingsByQuest = (questId: string): Booking[] => {
+// Получение бронирований для конкретного квеста
+const getBookingsForQuest = (questId: string): Booking[] => {
+  const bookings = getStoredBookings();
   return bookings.filter(booking => booking.questId === questId);
 };
 
-// Проверка доступности временного слота на конкретную дату и квест
-export const isTimeSlotAvailable = (date: string, time: string, questId: string): boolean => {
-  // Проверка, заблокирована ли дата
+// Обновление статуса бронирования
+const updateBookingStatus = (bookingId: string, status: "pending" | "confirmed" | "cancelled"): boolean => {
+  const bookings = getStoredBookings();
+  const index = bookings.findIndex(booking => booking.id === bookingId);
+  
+  if (index === -1) {
+    return false;
+  }
+  
+  bookings[index].status = status;
+  saveBookings(bookings);
+  return true;
+};
+
+// Удаление бронирования
+const deleteBooking = (bookingId: string): boolean => {
+  const bookings = getStoredBookings();
+  const newBookings = bookings.filter(booking => booking.id !== bookingId);
+  
+  if (newBookings.length === bookings.length) {
+    return false;
+  }
+  
+  saveBookings(newBookings);
+  return true;
+};
+
+// Блокирование даты
+const blockDate = (date: string, reason: string): boolean => {
+  const blockedDates = getStoredBlockedDates();
+  
+  // Проверяем, не заблокирована ли дата уже
   if (isDateBlocked(date)) {
     return false;
   }
   
-  // Проверка, забронировано ли уже это время для данного квеста
-  const isBooked = bookings.some(booking => 
-    booking.date === date && 
-    booking.time === time && 
-    booking.questId === questId
-  );
+  blockedDates.push({ date, reason });
+  saveBlockedDates(blockedDates);
+  return true;
+};
+
+// Разблокирование даты
+const unblockDate = (date: string): boolean => {
+  const blockedDates = getStoredBlockedDates();
+  const newBlockedDates = blockedDates.filter(blockedDate => blockedDate.date !== date);
   
-  // Проверяем, не забронировано ли время на другом квесте
-  const isBookedOnOtherQuest = isTimeBookedOnAnyQuest(date, time);
-  
-  return !isBooked && !isBookedOnOtherQuest;
-};
-
-// Проверка, забронировано ли время на любом квесте
-export const isTimeBookedOnAnyQuest = (date: string, time: string): boolean => {
-  return bookings.some(booking => 
-    booking.date === date && 
-    booking.time === time
-  );
-};
-
-// Проверка, заблокирована ли дата
-export const isDateBlocked = (date: string): boolean => {
-  return blockedDates.some(blocked => blocked.date === date);
-};
-
-// Получение причины блокировки даты
-export const getBlockedDateReason = (date: string): string | null => {
-  const blockedDate = blockedDates.find(blocked => blocked.date === date);
-  return blockedDate ? blockedDate.reason : null;
-};
-
-// Блокировка даты
-export const blockDate = (date: string, reason: string): void => {
-  // Проверяем, не заблокирована ли уже эта дата
-  if (!isDateBlocked(date)) {
-    blockedDates.push({ date, reason });
-    dispatchEventWithDelay('dates-updated');
-  }
-};
-
-// Разблокировка даты
-export const unblockDate = (date: string): void => {
-  blockedDates = blockedDates.filter(blocked => blocked.date !== date);
-  dispatchEventWithDelay('dates-updated');
-};
-
-// Получение всех заблокированных дат
-export const getBlockedDates = (): { date: string, reason: string }[] => {
-  return [...blockedDates];
-};
-
-// Форматировать телефонный номер для отображения
-export const formatPhoneNumber = (phone: string): string => {
-  // Удаляем все нецифровые символы
-  const cleaned = phone.replace(/\D/g, '');
-  
-  // Проверяем длину номера
-  if (cleaned.length !== 11) {
-    return phone; // Возвращаем оригинальный номер, если не соответствует формату
+  if (newBlockedDates.length === blockedDates.length) {
+    return false;
   }
   
-  // Форматируем номер как +7 (XXX) XXX-XX-XX
-  return `+${cleaned[0]} (${cleaned.substring(1, 4)}) ${cleaned.substring(4, 7)}-${cleaned.substring(7, 9)}-${cleaned.substring(9, 11)}`;
+  saveBlockedDates(newBlockedDates);
+  return true;
 };
 
-// Получить телефон поддержки
-export const getSupportPhone = (): string => {
-  return supportPhone;
+// Получение заблокированных дат
+const getBlockedDates = (): BlockedDate[] => {
+  return getStoredBlockedDates();
 };
 
-// Установить телефон поддержки
-export const setSupportPhone = (phone: string): void => {
+// Функции для работы с телефоном поддержки
+const getSupportPhone = (): string => {
+  const stored = localStorage.getItem(SUPPORT_PHONE_KEY);
+  return stored || supportPhone;
+};
+
+const setSupportPhone = (phone: string): void => {
   supportPhone = phone;
-  dispatchEventWithDelay('settings-updated');
+  localStorage.setItem(SUPPORT_PHONE_KEY, phone);
 };
 
-// Отправка события с задержкой для предотвращения циклов обновления
-const dispatchEventWithDelay = (eventName: string, delay = 100): void => {
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent(eventName));
-  }, delay);
-};
-
-export default {
+// Экспорт функций сервиса
+const bookingService = {
   generateTimeSlots,
-  getBookings,
-  addBooking,
-  updateBooking,
-  deleteBooking,
-  getBookingsByDate,
-  getBookingsByQuest,
   isTimeSlotAvailable,
   isDateBlocked,
-  getBlockedDateReason,
+  addBooking,
+  getBookings,
+  getBookingsForQuest,
+  updateBookingStatus,
+  deleteBooking,
   blockDate,
   unblockDate,
   getBlockedDates,
-  isTimeBookedOnAnyQuest,
-  formatPhoneNumber,
-  getSupportPhone,  // Добавляем в экспорт по умолчанию
-  setSupportPhone   // Добавляем в экспорт по умолчанию
+  getSupportPhone,
+  setSupportPhone,
 };
+
+export default bookingService;

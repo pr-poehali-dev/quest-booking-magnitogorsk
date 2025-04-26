@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import WarningTape from "@/components/WarningTape";
 import BookingCalendarPicker from "@/components/BookingCalendarPicker";
+import bookingService from "@/lib/bookingService";
 
 const ArtifactQuest: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -39,11 +40,27 @@ const ArtifactQuest: React.FC = () => {
       return;
     }
     
-    // В реальном приложении здесь был бы запрос к API
-    toast({
-      title: "Бронь в резерве",
-      description: "Скоро с вами свяжется оператор для уточнения",
-    });
+    // Добавляем бронирование
+    if (selectedDate && selectedTime) {
+      const booking = {
+        id: Math.random().toString(36).substring(2, 11),
+        questId: "artifact",
+        questType: "artifact" as "artifact" | "danger",
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: selectedTime,
+        name,
+        phone,
+        peopleCount: 4,
+        status: 'pending'
+      };
+      
+      bookingService.addBooking(booking);
+      
+      toast({
+        title: "Бронь в резерве",
+        description: "Скоро с вами свяжется оператор для уточнения",
+      });
+    }
     
     setBookingDialogOpen(false);
     setName("");
@@ -56,9 +73,10 @@ const ArtifactQuest: React.FC = () => {
   };
 
   const isTimeDisabled = (time: string) => {
-    // Здесь можно добавить логику для проверки доступности времени
-    // Например, если время уже прошло или все места забронированы
-    return Math.random() < 0.2; // Для примера блокируем случайные времена
+    if (!selectedDate) return true;
+    
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    return !bookingService.isTimeSlotAvailable(dateStr, time, "artifact");
   };
 
   return (
@@ -70,7 +88,7 @@ const ArtifactQuest: React.FC = () => {
       {/* Золотые медальоны и статуэтки (декоративные элементы) */}
       <div className="absolute top-1/4 left-1/4 w-16 h-16 bg-yellow-600 rounded-full animate-pulse opacity-60"></div>
       <div className="absolute top-1/3 right-1/4 w-24 h-24 bg-yellow-600 rounded-full animate-pulse opacity-60"></div>
-      <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-yellow-600 rounded-full animate-pulse opacity-70"></div>
+      <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-yellow-600 rounded-full animate-pulse opacity-60"></div>
       
       {/* Факелы */}
       <div className="absolute top-12 left-12 w-8 h-24 bg-orange-600 animate-flicker opacity-60"></div>
@@ -92,7 +110,7 @@ const ArtifactQuest: React.FC = () => {
         <div className="mb-8 flex justify-center">
           <div className="relative w-full max-w-xl overflow-hidden rounded-lg border-2 border-yellow-400">
             <img 
-              src="https://cdn.poehali.dev/files/3fe1b1b2-87e3-4301-85f1-117b241735bd.jpg" 
+              src="https://cdn.poehali.dev/files/e9a50ad7-a24b-4e60-a46b-8a850f1e4d69.jpg" 
               alt="Детективный квест - В поисках артефакта" 
               className="w-full h-[300px] object-cover"
             />
@@ -202,5 +220,17 @@ const ArtifactQuest: React.FC = () => {
     </div>
   );
 };
+
+// Вспомогательная функция форматирования даты
+function format(date: Date, formatString: string): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return formatString
+    .replace('yyyy', String(year))
+    .replace('MM', month)
+    .replace('dd', day);
+}
 
 export default ArtifactQuest;

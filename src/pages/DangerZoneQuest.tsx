@@ -5,6 +5,7 @@ import WarningTape from "@/components/WarningTape";
 import BookingCalendarPicker from "@/components/BookingCalendarPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
+import bookingService from "@/lib/bookingService";
 
 const DangerZoneQuest = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -25,7 +26,7 @@ const DangerZoneQuest = () => {
     { time: "12:00", available: true },
     { time: "13:30", available: true },
     { time: "15:00", available: true },
-    { time: "16:30", available: false },
+    { time: "16:30", available: true },
     { time: "18:00", available: true },
     { time: "19:30", available: true },
     { time: "21:00", available: true },
@@ -49,21 +50,45 @@ const DangerZoneQuest = () => {
       return;
     }
     
-    // В реальной ситуации здесь был бы запрос к API для сохранения брони
+    // Добавляем бронирование
+    if (selectedDate && selectedTime) {
+      const booking = {
+        id: Math.random().toString(36).substring(2, 11),
+        questId: "danger",
+        questType: "danger" as "artifact" | "danger",
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: selectedTime,
+        name,
+        phone,
+        peopleCount: 4,
+        status: 'pending'
+      };
+      
+      bookingService.addBooking(booking);
+      
+      toast({
+        title: "Бронь в резерве",
+        description: "Скоро с вами свяжется оператор для уточнения",
+      });
+    }
+    
     setIsBookingOpen(false);
     setName("");
     setPhone("");
-    
-    toast({
-      title: "Бронь в резерве",
-      description: "Скоро с вами свяжется оператор для уточнения",
-    });
   };
 
   // Определяем цену в зависимости от времени
   const getPrice = (time: string) => {
     const hour = parseInt(time.split(":")[0]);
     return hour >= 21 ? "1000" : "900";
+  };
+
+  // Проверяем доступность времени
+  const isTimeAvailable = (time: string) => {
+    if (!selectedDate) return false;
+    
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    return bookingService.isTimeSlotAvailable(dateStr, time, "danger");
   };
 
   return (
@@ -84,7 +109,7 @@ const DangerZoneQuest = () => {
         <div className="mb-8 flex justify-center">
           <div className="relative w-full max-w-xl overflow-hidden rounded-lg caution-border">
             <img 
-              src="https://cdn.poehali.dev/files/4f9bce74-f007-4d58-b954-c43d20ce930d.jpg" 
+              src="https://cdn.poehali.dev/files/b4cf6771-45d7-4b94-b475-2e1ac5f8f74b.jpg" 
               alt="Противогаз - Квест Опасная зона" 
               className="w-full h-[300px] object-cover"
             />
@@ -131,24 +156,28 @@ const DangerZoneQuest = () => {
             <div className="mb-8">
               <h3 className="text-xl font-bold text-orange-DEFAULT mb-4">Выберите время:</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {timeSlots.map((slot) => (
-                  <div key={slot.time} className="text-center">
-                    <button
-                      disabled={!slot.available}
-                      onClick={() => slot.available && handleBookTime(slot.time)}
-                      className={`w-full p-3 border-2 ${
-                        slot.available 
-                          ? "border-yellow-DEFAULT text-yellow-DEFAULT hover:bg-yellow-DEFAULT hover:text-black" 
-                          : "border-red-500 text-red-500 line-through opacity-50"
-                      } bg-black rounded-md transition-colors`}
-                    >
-                      {slot.time}
-                    </button>
-                    <p className="mt-1 text-orange-DEFAULT">
-                      {slot.available ? `${getPrice(slot.time)}₽` : "Недоступно"}
-                    </p>
-                  </div>
-                ))}
+                {timeSlots.map((slot) => {
+                  const available = isTimeAvailable(slot.time);
+                  
+                  return (
+                    <div key={slot.time} className="text-center">
+                      <button
+                        disabled={!available}
+                        onClick={() => available && handleBookTime(slot.time)}
+                        className={`w-full p-3 border-2 ${
+                          available 
+                            ? "border-yellow-DEFAULT text-yellow-DEFAULT hover:bg-yellow-DEFAULT hover:text-black" 
+                            : "border-red-500 text-red-500 line-through opacity-50"
+                        } bg-black rounded-md transition-colors`}
+                      >
+                        {slot.time}
+                      </button>
+                      <p className="mt-1 text-orange-DEFAULT">
+                        {available ? `${getPrice(slot.time)}₽` : "Недоступно"}
+                      </p>
+                    </div>
+                  )}
+                )}
               </div>
             </div>
           )}
@@ -206,5 +235,17 @@ const DangerZoneQuest = () => {
     </div>
   );
 };
+
+// Вспомогательная функция форматирования даты
+function format(date: Date, formatString: string): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return formatString
+    .replace('yyyy', String(year))
+    .replace('MM', month)
+    .replace('dd', day);
+}
 
 export default DangerZoneQuest;
