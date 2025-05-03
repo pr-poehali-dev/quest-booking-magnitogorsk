@@ -15,9 +15,22 @@ const BookingTable: React.FC<BookingTableProps> = ({
 }) => {
   const getBookingsForDate = () => {
     if (!selectedDate) return [];
-    return bookings.filter(booking => 
-      booking.date.toDateString() === selectedDate.toDateString()
-    );
+    
+    return bookings.filter(booking => {
+      // Проверка формата даты в бронировании
+      if (typeof booking.date === 'string') {
+        // Если дата - строка, преобразуем selectedDate в строку для сравнения
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const selectedDateStr = `${year}-${month}-${day}`;
+        return booking.date === selectedDateStr;
+      } else if (booking.date instanceof Date) {
+        // Если дата - объект Date, используем toDateString
+        return booking.date.toDateString() === selectedDate.toDateString();
+      }
+      return false;
+    });
   };
 
   const dateBookings = getBookingsForDate();
