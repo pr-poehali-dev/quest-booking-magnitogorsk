@@ -44,9 +44,21 @@ const QuestTabContent: React.FC<QuestTabContentProps> = ({
       {selectedDate && (
         <div className="mt-4 text-sm text-orange-400">
           <p>
-            Занято: {questBookings.filter(b => 
-              b.date.toDateString() === selectedDate?.toDateString()
-            ).length} из {times.length} слотов
+            Занято: {questBookings.filter(b => {
+              // Проверка формата даты в бронировании
+              if (typeof b.date === 'string') {
+                // Если дата - строка, преобразуем selectedDate в строку для сравнения
+                const year = selectedDate.getFullYear();
+                const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(selectedDate.getDate()).padStart(2, '0');
+                const selectedDateStr = `${year}-${month}-${day}`;
+                return b.date === selectedDateStr;
+              } else if (b.date instanceof Date) {
+                // Если дата - объект Date, используем toDateString
+                return b.date.toDateString() === selectedDate.toDateString();
+              }
+              return false;
+            }).length} из {times.length} слотов
           </p>
         </div>
       )}
