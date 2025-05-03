@@ -20,6 +20,26 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
 }) => {
   if (!booking) return null;
 
+  // Функция для получения форматированной даты
+  const getFormattedDate = (date: string | Date): string => {
+    if (typeof date === 'string') {
+      // Попытка преобразовать строку в дату
+      try {
+        // Проверяем формат даты "YYYY-MM-DD"
+        const parts = date.split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        return date; // возвращаем как есть, если формат неизвестен
+      } catch (error) {
+        return date; // возвращаем как есть в случае ошибки
+      }
+    } else if (date instanceof Date) {
+      return date.toLocaleDateString();
+    }
+    return 'Дата не определена';
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="bg-white border-2 border-black text-black max-w-md">
@@ -40,7 +60,7 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
             
             <div className="flex justify-between">
               <span className="font-bold">Дата:</span> 
-              <span>{booking.date.toLocaleDateString()}</span>
+              <span>{getFormattedDate(booking.date)}</span>
             </div>
             
             <div className="flex justify-between">
